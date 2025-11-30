@@ -6,6 +6,7 @@ import { updateGrid, scene } from './scene.js';
 import { selectObject, onSelectionChange } from './selection.js';
 import { saveState, undo, redo } from './history.js';
 import { alignTool } from './alignTool.js';
+import { shapeManager } from './shapeManager.js';
 
 function updateOffsetDisplay(offset) {
     document.getElementById('offset-x').value = offset.x.toFixed(2);
@@ -26,20 +27,93 @@ export function initUI() {
     // Save initial state
     saveState();
 
-    addListener('add-box', 'click', () => {
-        saveState();
-        createMesh(new THREE.BoxGeometry(20, 20, 20), 0x00ff00, new THREE.Vector3(0, 10, 0), 'box');
-    });
+    // Initialize Shape Sidebar
+    const shapeGrid = document.getElementById('shape-grid');
+    const shapes = shapeManager.getShapes();
 
-    addListener('add-cylinder', 'click', () => {
-        saveState();
-        createMesh(new THREE.CylinderGeometry(10, 10, 20, 32), 0xff0000, new THREE.Vector3(30, 10, 0), 'cylinder');
-    });
+    // Populate grid
+    for (const shape of shapes) {
+        const card = document.createElement('div');
+        card.className = 'shape-card';
+        card.title = `Add ${shape.name}`;
 
-    addListener('add-sphere', 'click', () => {
-        saveState();
-        createMesh(new THREE.SphereGeometry(10, 32, 32), 0x0000ff, new THREE.Vector3(-30, 10, 0), 'sphere');
-    });
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'shape-preview';
+
+        // Add loading placeholder or icon initially
+        previewContainer.innerHTML = `<span style="font-size: 24px;">${shape.icon}</span>`;
+
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'shape-name';
+        nameLabel.textContent = shape.name;
+
+        card.appendChild(previewContainer);
+        card.appendChild(nameLabel);
+
+        // Generate preview asynchronously
+        shapeManager.generatePreview(shape.id).then(dataUrl => {
+            if (dataUrl) {
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(img);
+            }
+        });
+
+        card.addEventListener('click', async () => {
+            saveState();
+            try {
+                const geometry = await shapeManager.loadShapeGeometry(shape.id);
+                // Random position for now, or fixed offset
+                const position = new THREE.Vector3(
+                    (Math.random() - 0.5) * 50,
+                    10,
+                    (Math.random() - 0.5) * 50
+                );
+
+                // Adjust geometry center/scale if needed for STLs
+                if (shape.type === 'stl') {
+                    geometry.computeBoundingBox();
+                    const center = new THREE.Vector3();
+                    geometry.boundingBox.getCenter(center);
+                    geometry.translate(-center.x, -center.y, -center.z);
+
+                    // Normalize scale roughly to 20 units
+                    const size = new THREE.Vector3();
+                    geometry.boundingBox.getSize(size);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    if (maxDim > 0) {
+                        const scale = 20 / maxDim;
+                        geometry.scale(scale, scale, scale);
+                    }
+                }
+
+                createMesh(geometry, Math.random() * 0xffffff, position, shape.name);
+            } catch (error) {
+                console.error('Error adding shape:', error);
+                alert(`Failed to add ${shape.name}`);
+            }
+        });
+
+        shapeGrid.appendChild(card);
+    }
+
+    // Sidebar Toggle Logic
+    const sidebar = document.getElementById('shape-sidebar');
+    const minimizeBtn = document.getElementById('minimize-sidebar');
+    const bubbleBtn = document.getElementById('shapes-bubble');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('closed');
+        if (sidebar.classList.contains('closed')) {
+            bubbleBtn.classList.add('visible');
+        } else {
+            bubbleBtn.classList.remove('visible');
+        }
+    }
+
+    minimizeBtn.addEventListener('click', toggleSidebar);
+    bubbleBtn.addEventListener('click', toggleSidebar);
 
     addListener('delete-object', 'click', deleteSelectedObject);
     addListener('uncombine-object', 'click', uncombineObject);

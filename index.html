@@ -19,11 +19,23 @@
 </head>
 
 <body>
+    <div id="shape-sidebar" class="sidebar open">
+        <div class="sidebar-header">
+            <h3>Shapes</h3>
+            <button id="minimize-sidebar" title="Minimize">─</button>
+        </div>
+        <div id="shape-grid" class="shape-grid">
+            <!-- Shapes will be populated here -->
+        </div>
+    </div>
+
+    <button id="shapes-bubble" class="shapes-bubble" title="Open Shapes">
+        <span style="font-size: 24px;">📦</span>
+    </button>
+
     <div id="toolbar">
         <div class="toolbar-group">
-            <button id="add-box" title="Add Box">📦</button>
-            <button id="add-cylinder" title="Add Cylinder">🛢️</button>
-            <button id="add-sphere" title="Add Sphere">🔵</button>
+            <!-- Shapes moved to sidebar -->
         </div>
         <div class="separator"></div>
         <div class="toolbar-group">
@@ -42,61 +54,50 @@
         <h3>Properties</h3>
         <div id="no-selection">Select an object</div>
         <div id="object-properties" style="display: none;">
-            <label>
-                Name: <input type="text" id="object-name" placeholder="Unnamed Object">
-            </label>
-            <div class="separator-horizontal"></div>
-            <label>
-                Color: <input type="color" id="object-color">
-            </label>
-            <div class="separator-horizontal"></div>
-            <div id="type-container">
-                <label>Type:</label>
-                <div class="type-buttons">
+            <!-- Header: Name & Color -->
+            <div class="prop-row header-row">
+                <input type="text" id="object-name" placeholder="Unnamed Object" class="name-input">
+                <input type="color" id="object-color" class="color-input" title="Color">
+            </div>
+
+            <!-- Type Selector -->
+            <div class="prop-row type-row">
+                <div class="type-buttons segmented">
                     <button id="type-solid" class="type-btn active">Solid</button>
                     <button id="type-hole" class="type-btn">Hole</button>
                 </div>
             </div>
-            <div class="separator-horizontal"></div>
-            <div id="dimensions-container">
-                <label>
-                    W (mm): <input type="number" id="object-width" step="0.1">
-                </label>
-                <label>
-                    H (mm): <input type="number" id="object-height" step="0.1">
-                </label>
-                <label>
-                    D (mm): <input type="number" id="object-depth" step="0.1">
-                </label>
+
+            <div class="prop-divider"></div>
+
+            <!-- Transform Grid -->
+            <div class="transform-grid">
+                <!-- Dimensions -->
+                <div class="transform-label">Size</div>
+                <input type="number" id="object-width" step="0.1" placeholder="W" title="Width">
+                <input type="number" id="object-height" step="0.1" placeholder="H" title="Height">
+                <input type="number" id="object-depth" step="0.1" placeholder="D" title="Depth">
+
+                <!-- Position -->
+                <div class="transform-label">Pos</div>
+                <input type="number" id="offset-x" step="0.1" value="0" placeholder="X" title="Position X">
+                <input type="number" id="offset-y" step="0.1" value="0" placeholder="Y" title="Position Y">
+                <input type="number" id="offset-z" step="0.1" value="0" placeholder="Z" title="Position Z">
+
+                <!-- Rotation -->
+                <div class="transform-label">Rot</div>
+                <input type="number" id="rotate-x" step="1" value="0" placeholder="X" title="Rotation X">
+                <input type="number" id="rotate-y" step="1" value="0" placeholder="Y" title="Rotation Y">
+                <input type="number" id="rotate-z" step="1" value="0" placeholder="Z" title="Rotation Z">
             </div>
-            <div class="separator-horizontal"></div>
-            <div id="movement-container">
-                <h4>Position Offset (mm)</h4>
-                <label>
-                    X: <input type="number" id="offset-x" step="0.1" value="0">
-                </label>
-                <label>
-                    Y: <input type="number" id="offset-y" step="0.1" value="0">
-                </label>
-                <label>
-                    Z: <input type="number" id="offset-z" step="0.1" value="0">
-                </label>
+
+            <div class="prop-divider"></div>
+
+            <!-- Actions -->
+            <div class="prop-row actions-row">
+                <button id="uncombine-object" style="display: none;" class="action-btn secondary">Uncombine</button>
+                <button id="delete-object" class="action-btn danger">Delete</button>
             </div>
-            <div class="separator-horizontal"></div>
-            <div id="rotation-container">
-                <h4>Rotation (degrees)</h4>
-                <label>
-                    X: <input type="number" id="rotate-x" step="1" value="0">
-                </label>
-                <label>
-                    Y: <input type="number" id="rotate-y" step="1" value="0">
-                </label>
-                <label>
-                    Z: <input type="number" id="rotate-z" step="1" value="0">
-                </label>
-            </div>
-            <button id="uncombine-object" style="display: none;">Uncombine</button>
-            <button id="delete-object">Delete</button>
         </div>
     </div>
 
