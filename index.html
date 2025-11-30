@@ -20,7 +20,7 @@
     </script>
 </head>
 
-<body>
+<body class="theme-galaxy">
     <div id="shape-sidebar" class="sidebar open">
         <div class="sidebar-header">
             <h3>Shapes</h3>
@@ -136,6 +136,17 @@
             <div class="setting-item">
                 <label>Grid Size (mm)</label>
                 <input type="number" id="grid-size" value="200" step="10">
+            </div>
+
+            <div class="separator-horizontal"></div>
+
+            <div class="setting-item theme-setting">
+                <label>Background Theme</label>
+                <div class="theme-buttons segmented">
+                    <button id="theme-classic" class="theme-btn">Classic</button>
+                    <button id="theme-galaxy" class="theme-btn active">Golden Galaxy</button>
+                </div>
+                <p class="setting-hint">Switch between the original look and the new shimmering galaxy backdrop.</p>
             </div>
         </div>
     </div>

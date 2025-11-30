@@ -8,6 +8,8 @@ import { saveState, undo, redo } from './history.js';
 import { alignTool } from './alignTool.js';
 import { shapeManager } from './shapeManager.js';
 
+const THEME_STORAGE_KEY = 'imagineit-theme';
+
 function updateOffsetDisplay(offset) {
     document.getElementById('offset-x').value = offset.x.toFixed(2);
     document.getElementById('offset-y').value = offset.y.toFixed(2);
@@ -37,6 +39,29 @@ function addListener(id, event, handler) {
     } else {
         console.warn(`Element with id '${id}' not found when adding '${event}' listener.`);
     }
+}
+
+function setActiveThemeButtons(theme) {
+    const classicBtn = document.getElementById('theme-classic');
+    const galaxyBtn = document.getElementById('theme-galaxy');
+
+    if (classicBtn && galaxyBtn) {
+        classicBtn.classList.toggle('active', theme === 'classic');
+        galaxyBtn.classList.toggle('active', theme === 'galaxy');
+    }
+}
+
+function applyThemePreference(theme) {
+    const nextTheme = theme === 'classic' ? 'classic' : 'galaxy';
+    document.body.classList.remove('theme-classic', 'theme-galaxy');
+    document.body.classList.add(`theme-${nextTheme}`);
+    setActiveThemeButtons(nextTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+}
+
+function initThemePreference() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'galaxy';
+    applyThemePreference(savedTheme);
 }
 
 export function initUI() {
@@ -223,6 +248,8 @@ export function initUI() {
     const settingsBtn = document.getElementById('settings-btn');
     const closeSettingsBtn = document.getElementById('close-settings');
     const flipGuiBtn = document.getElementById('flip-gui-btn');
+    const themeClassicBtn = document.getElementById('theme-classic');
+    const themeGalaxyBtn = document.getElementById('theme-galaxy');
 
     function openSettings() {
         settingsModal.classList.add('open');
@@ -241,6 +268,16 @@ export function initUI() {
             closeSettings();
         }
     });
+
+    initThemePreference();
+
+    if (themeClassicBtn) {
+        themeClassicBtn.addEventListener('click', () => applyThemePreference('classic'));
+    }
+
+    if (themeGalaxyBtn) {
+        themeGalaxyBtn.addEventListener('click', () => applyThemePreference('galaxy'));
+    }
 
     // Flip GUI
     if (flipGuiBtn) {

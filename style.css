@@ -4,7 +4,13 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #050510;
     color: #e0e0e0;
-    /* Galaxy Background */
+    position: relative;
+    min-height: 100vh;
+    isolation: isolate;
+}
+
+/* Legacy background (original look) */
+body.theme-classic {
     background-image:
         radial-gradient(white, rgba(255, 255, 255, .2) 2px, transparent 3px),
         radial-gradient(white, rgba(255, 255, 255, .15) 1px, transparent 2px),
@@ -12,6 +18,62 @@ body {
         radial-gradient(rgba(120, 100, 255, 0.1), rgba(0, 0, 0, 0));
     background-size: 550px 550px, 350px 350px, 250px 250px, 100% 100%;
     background-position: 0 0, 40px 60px, 130px 270px, 0 0;
+}
+
+/* Golden galaxy background */
+body.theme-galaxy {
+    background-color: #030309;
+    background-image:
+        radial-gradient(circle at 20% 25%, rgba(255, 193, 37, 0.18), transparent 35%),
+        radial-gradient(circle at 70% 15%, rgba(255, 213, 79, 0.12), transparent 32%),
+        radial-gradient(circle at 55% 65%, rgba(255, 235, 148, 0.1), transparent 40%),
+        radial-gradient(circle at 15% 70%, rgba(0, 0, 0, 0.4), transparent 45%);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 120% 120%;
+    background-repeat: no-repeat;
+}
+
+body.theme-galaxy::before,
+body.theme-galaxy::after {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body.theme-galaxy::before {
+    background-image:
+        radial-gradient(1px 1px at 10px 20px, rgba(255, 255, 255, 0.9), transparent 55%),
+        radial-gradient(1px 1px at 80px 120px, rgba(255, 215, 128, 0.8), transparent 55%),
+        radial-gradient(1px 1px at 160px 60px, rgba(255, 255, 255, 0.7), transparent 55%),
+        radial-gradient(1px 1px at 200px 240px, rgba(255, 215, 64, 0.9), transparent 55%);
+    background-size: 180px 180px, 260px 260px, 220px 220px, 300px 300px;
+    opacity: 0.8;
+    mix-blend-mode: screen;
+    animation: driftStars 90s linear infinite;
+}
+
+body.theme-galaxy::after {
+    background-image:
+        radial-gradient(circle at 30% 40%, rgba(255, 193, 37, 0.16), transparent 45%),
+        radial-gradient(circle at 75% 55%, rgba(255, 255, 255, 0.12), transparent 42%),
+        radial-gradient(80px 110px at 60% 20%, rgba(255, 215, 128, 0.18), transparent 70%),
+        radial-gradient(130px 90px at 20% 75%, rgba(0, 0, 0, 0.35), transparent 80%);
+    filter: blur(18px);
+    opacity: 0.85;
+    animation: floatNebula 60s ease-in-out infinite alternate;
+}
+
+@keyframes driftStars {
+    0% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(-4%, -2%, 0); }
+    100% { transform: translate3d(4%, 4%, 0); }
+}
+
+@keyframes floatNebula {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(3%, -2%, 0) scale(1.05); }
+    100% { transform: translate3d(-3%, 3%, 0) scale(1.08); }
 }
 
 canvas {
@@ -580,6 +642,51 @@ canvas {
 .setting-item input[type="number"]:focus {
     outline: none;
     border-color: #00ffff;
+}
+
+.setting-item.theme-setting {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.theme-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #f0f0f0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 0 0 0 rgba(255, 213, 79, 0.4);
+}
+
+.theme-btn:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 16px rgba(255, 215, 64, 0.2);
+}
+
+.theme-btn.active {
+    background: linear-gradient(135deg, rgba(255, 215, 64, 0.3), rgba(255, 166, 43, 0.25));
+    color: #ffd740;
+    border-color: rgba(255, 215, 64, 0.5);
+    box-shadow: 0 0 20px rgba(255, 215, 64, 0.3);
+}
+
+.setting-hint {
+    margin: 0;
+    font-size: 12px;
+    color: #9ea7c3;
 }
 
 /* GUI Flip Styles */
