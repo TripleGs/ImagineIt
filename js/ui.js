@@ -8,6 +8,9 @@ import { saveState, undo, redo } from './history.js';
 import { alignTool } from './alignTool.js';
 import { shapeManager } from './shapeManager.js';
 
+const THEME_STORAGE_KEY = 'display-theme';
+const SUPPORTED_THEMES = ['classic', 'galaxy'];
+
 function updateOffsetDisplay(offset) {
     document.getElementById('offset-x').value = offset.x.toFixed(2);
     document.getElementById('offset-y').value = offset.y.toFixed(2);
@@ -42,6 +45,9 @@ function addListener(id, event, handler) {
 export function initUI() {
     // Save initial state
     saveState();
+
+    // Apply saved theme preference early
+    applyTheme(loadThemePreference());
 
     // Initialize Shape Sidebar
     const shapeGrid = document.getElementById('shape-grid');
@@ -223,6 +229,7 @@ export function initUI() {
     const settingsBtn = document.getElementById('settings-btn');
     const closeSettingsBtn = document.getElementById('close-settings');
     const flipGuiBtn = document.getElementById('flip-gui-btn');
+    const themeSelect = document.getElementById('theme-select');
 
     function openSettings() {
         settingsModal.classList.add('open');
@@ -247,6 +254,13 @@ export function initUI() {
         flipGuiBtn.addEventListener('click', () => {
             document.body.classList.toggle('gui-flipped');
             saveState(); // Save preference if we were persisting it (not implemented yet but good practice)
+        });
+    }
+
+    if (themeSelect) {
+        themeSelect.value = loadThemePreference();
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
         });
     }
 
@@ -316,6 +330,26 @@ function updateTypeButtons(isSolid) {
     } else {
         solidBtn.classList.remove('active');
         holeBtn.classList.add('active');
+    }
+}
+
+function loadThemePreference() {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored && SUPPORTED_THEMES.includes(stored)) {
+        return stored;
+    }
+    return SUPPORTED_THEMES[0];
+}
+
+function applyTheme(theme) {
+    const nextTheme = SUPPORTED_THEMES.includes(theme) ? theme : SUPPORTED_THEMES[0];
+    document.body.classList.remove('theme-classic', 'theme-galaxy');
+    document.body.classList.add(`theme-${nextTheme}`);
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+
+    const select = document.getElementById('theme-select');
+    if (select && select.value !== nextTheme) {
+        select.value = nextTheme;
     }
 }
 
