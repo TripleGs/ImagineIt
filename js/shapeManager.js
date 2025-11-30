@@ -7,30 +7,30 @@ class ShapeManager {
             {
                 id: 'box',
                 name: 'Box',
-                type: 'primitive',
-                create: () => new THREE.BoxGeometry(20, 20, 20),
-                icon: '📦'
+                type: 'stl',
+                url: 'assets/box.stl',
+                icon: 'check_box_outline_blank'
             },
             {
                 id: 'cylinder',
                 name: 'Cylinder',
-                type: 'primitive',
-                create: () => new THREE.CylinderGeometry(10, 10, 20, 32),
-                icon: '🛢️'
+                type: 'stl',
+                url: 'assets/cylinder.stl',
+                icon: 'token'
             },
             {
                 id: 'sphere',
                 name: 'Sphere',
-                type: 'primitive',
-                create: () => new THREE.SphereGeometry(10, 32, 32),
-                icon: '🔵'
+                type: 'stl',
+                url: 'assets/sphere.stl',
+                icon: 'circle'
             },
             {
                 id: 'tetrahedron',
                 name: 'Tetrahedron',
                 type: 'stl',
                 url: 'assets/tetrahedron.stl',
-                icon: '🔺'
+                icon: 'change_history'
             }
         ];
         this.loader = new STLLoader();

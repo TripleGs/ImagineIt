@@ -57,7 +57,7 @@ export function initUI() {
         previewContainer.className = 'shape-preview';
 
         // Add loading placeholder or icon initially
-        previewContainer.innerHTML = `<span style="font-size: 24px;">${shape.icon}</span>`;
+        previewContainer.innerHTML = `<span class="material-symbols-rounded" style="font-size: 24px;">${shape.icon}</span>`;
 
         const nameLabel = document.createElement('div');
         nameLabel.className = 'shape-name';
@@ -219,7 +219,37 @@ export function initUI() {
     });
 
     // Settings
-    // Settings
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsBtn = document.getElementById('settings-btn');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const flipGuiBtn = document.getElementById('flip-gui-btn');
+
+    function openSettings() {
+        settingsModal.classList.add('open');
+    }
+
+    function closeSettings() {
+        settingsModal.classList.remove('open');
+    }
+
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            closeSettings();
+        }
+    });
+
+    // Flip GUI
+    if (flipGuiBtn) {
+        flipGuiBtn.addEventListener('click', () => {
+            document.body.classList.toggle('gui-flipped');
+            saveState(); // Save preference if we were persisting it (not implemented yet but good practice)
+        });
+    }
+
     addListener('snap-setting', 'change', (e) => {
         const val = parseFloat(e.target.value);
         state.snapValue = val;
@@ -290,6 +320,9 @@ function updateTypeButtons(isSolid) {
 }
 
 export function updatePropertiesPanel(objects) {
+    const panel = document.getElementById('properties-panel');
+    panel.style.display = 'block';
+
     document.getElementById('no-selection').style.display = 'none';
     document.getElementById('object-properties').style.display = 'flex';
 
@@ -399,6 +432,9 @@ export function updatePropertiesPanel(objects) {
 }
 
 export function hidePropertiesPanel() {
+    const panel = document.getElementById('properties-panel');
+    panel.style.display = 'none';
+
     document.getElementById('no-selection').style.display = 'block';
     document.getElementById('object-properties').style.display = 'none';
 
