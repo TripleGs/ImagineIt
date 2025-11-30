@@ -39,6 +39,15 @@ function addListener(id, event, handler) {
     }
 }
 
+function applyBackgroundStyle(style) {
+    const backdrop = document.getElementById('cosmic-backdrop');
+    if (!backdrop) return;
+
+    const styleClass = style === 'golden-galaxy' ? 'golden-galaxy' : 'classic';
+    backdrop.classList.remove('classic', 'golden-galaxy');
+    backdrop.classList.add(styleClass);
+}
+
 export function initUI() {
     // Save initial state
     saveState();
@@ -223,6 +232,7 @@ export function initUI() {
     const settingsBtn = document.getElementById('settings-btn');
     const closeSettingsBtn = document.getElementById('close-settings');
     const flipGuiBtn = document.getElementById('flip-gui-btn');
+    const backgroundSelect = document.getElementById('background-style');
 
     function openSettings() {
         settingsModal.classList.add('open');
@@ -247,6 +257,18 @@ export function initUI() {
         flipGuiBtn.addEventListener('click', () => {
             document.body.classList.toggle('gui-flipped');
             saveState(); // Save preference if we were persisting it (not implemented yet but good practice)
+        });
+    }
+
+    const savedBackgroundStyle = localStorage.getItem('background-style') || 'classic';
+    applyBackgroundStyle(savedBackgroundStyle);
+
+    if (backgroundSelect) {
+        backgroundSelect.value = savedBackgroundStyle;
+        backgroundSelect.addEventListener('change', (e) => {
+            const style = e.target.value;
+            applyBackgroundStyle(style);
+            localStorage.setItem('background-style', style);
         });
     }
 
