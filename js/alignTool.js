@@ -147,19 +147,28 @@ export class AlignTool {
     onPointerMove(event) {
         if (!this.isActive) return;
 
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        const rect = renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         this.raycaster.setFromCamera(this.mouse, camera);
 
-        const intersects = this.raycaster.intersectObjects(this.handles);
+        const intersects = this.raycaster.intersectObjects(this.handles, true);
 
         if (intersects.length > 0) {
-            const handle = intersects[0].object;
-            if (this.hoveredHandle !== handle) {
-                this.hoveredHandle = handle;
-                this.highlightHandle(handle);
-                this.showPreview(handle.userData.axis, handle.userData.type);
+            // Find the root handle object (in case we hit the outline child)
+            let hitObject = intersects[0].object;
+            while (hitObject && !hitObject.userData.isAlignHandle && hitObject.parent) {
+                hitObject = hitObject.parent;
+            }
+
+            if (hitObject && hitObject.userData.isAlignHandle) {
+                const handle = hitObject;
+                if (this.hoveredHandle !== handle) {
+                    this.hoveredHandle = handle;
+                    this.highlightHandle(handle);
+                    this.showPreview(handle.userData.axis, handle.userData.type);
+                }
             }
         } else {
             if (this.hoveredHandle) {

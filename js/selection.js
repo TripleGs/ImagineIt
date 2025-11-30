@@ -23,8 +23,9 @@ export function initSelection(cam, rend) {
 function onPointerDown(event) {
     if (event.target !== renderer.domElement) return;
 
-    state.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    state.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const rect = renderer.domElement.getBoundingClientRect();
+    state.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    state.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     state.raycaster.setFromCamera(state.mouse, camera);
     const intersects = state.raycaster.intersectObjects(state.objects);
@@ -56,8 +57,9 @@ function onPointerDown(event) {
 function onPointerMove(event) {
     if (!state.isDragging || state.selectedObjects.length === 0) return;
 
-    state.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    state.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const rect = renderer.domElement.getBoundingClientRect();
+    state.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    state.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     state.raycaster.setFromCamera(state.mouse, camera);
 
