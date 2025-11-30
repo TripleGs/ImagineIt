@@ -2,17 +2,220 @@ body {
     margin: 0;
     overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #050510;
+    background-color: #f0f0f0;
     color: #e0e0e0;
-    /* Galaxy Background */
-    background-image:
-        radial-gradient(white, rgba(255, 255, 255, .2) 2px, transparent 3px),
-        radial-gradient(white, rgba(255, 255, 255, .15) 1px, transparent 2px),
-        radial-gradient(white, rgba(255, 255, 255, .1) 2px, transparent 3px),
-        radial-gradient(rgba(120, 100, 255, 0.1), rgba(0, 0, 0, 0));
-    background-size: 550px 550px, 350px 350px, 250px 250px, 100% 100%;
-    background-position: 0 0, 40px 60px, 130px 270px, 0 0;
+    transition: background-color 0.5s;
 }
+
+/* Galaxy Theme */
+body.theme-galaxy {
+    background-color: #000000;
+    /* Background handled by Three.js */
+}
+
+/* Dark Theme */
+body.theme-dark {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+}
+
+/* Dark Theme UI */
+body.theme-dark .glass-panel,
+body.theme-dark #toolbar,
+body.theme-dark #properties-panel,
+body.theme-dark .sidebar,
+body.theme-dark #settings-modal .modal-content {
+    background: rgba(30, 30, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+body.theme-dark .sidebar-header,
+body.theme-dark #properties-panel h3,
+body.theme-dark .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+body.theme-dark input[type="text"],
+body.theme-dark input[type="number"],
+body.theme-dark .theme-select {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+body.theme-dark input:focus,
+body.theme-dark .theme-select:focus {
+    border-color: #4dd0e1;
+    box-shadow: 0 0 8px rgba(77, 208, 225, 0.2);
+}
+
+body.theme-dark #toolbar button.active,
+body.theme-dark .type-btn.active {
+    color: #4dd0e1;
+    border-color: rgba(77, 208, 225, 0.5);
+    background: rgba(77, 208, 225, 0.1);
+    box-shadow: 0 0 10px rgba(77, 208, 225, 0.2);
+}
+
+body.theme-dark #toolbar button.active-tool {
+    background: linear-gradient(135deg, #006064, #0097a7);
+    color: white;
+    border-color: #4dd0e1;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+}
+
+body.theme-dark .shapes-bubble {
+    background: rgba(30, 30, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #4dd0e1;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+@keyframes galaxyMove {
+    0% {
+        background-position: 0 0, 0 0, 0 0, 0 0;
+    }
+
+    100% {
+        background-position: 0 0, 550px 550px, -350px 350px, 250px -250px;
+    }
+}
+
+/* Galaxy UI Accents */
+body.theme-galaxy .glass-panel,
+body.theme-galaxy #toolbar,
+body.theme-galaxy #properties-panel,
+body.theme-galaxy .sidebar,
+body.theme-galaxy #settings-modal .modal-content {
+    background: rgba(5, 5, 10, 0.85);
+    /* Darker background for contrast */
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    /* Gold border */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+/* Text Colors */
+body.theme-galaxy,
+body.theme-galaxy h3,
+body.theme-galaxy h2,
+body.theme-galaxy label,
+body.theme-galaxy .transform-label,
+body.theme-galaxy .shape-name {
+    color: #ffffff;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+body.theme-galaxy .transform-label {
+    color: #ffd700;
+    /* Gold labels */
+}
+
+/* Buttons */
+body.theme-galaxy #toolbar button,
+body.theme-galaxy .type-btn,
+body.theme-galaxy .action-btn,
+body.theme-galaxy .close-btn,
+body.theme-galaxy #minimize-sidebar {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-galaxy #toolbar button:hover,
+body.theme-galaxy .type-btn:hover,
+body.theme-galaxy .action-btn:hover,
+body.theme-galaxy .close-btn:hover,
+body.theme-galaxy #minimize-sidebar:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.5);
+    color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+/* Active States */
+body.theme-galaxy #toolbar button.active,
+body.theme-galaxy .type-btn.active {
+    color: #ffd700;
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    background: rgba(255, 215, 0, 0.1);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+body.theme-galaxy #toolbar button.active-tool {
+    background: linear-gradient(135deg, #b8860b, #ffd700);
+    color: #000;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    text-shadow: none;
+}
+
+/* Inputs */
+body.theme-galaxy input[type="text"],
+body.theme-galaxy input[type="number"],
+body.theme-galaxy .theme-select {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffd700;
+}
+
+body.theme-galaxy input:focus,
+body.theme-galaxy .theme-select:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* Shape Cards */
+body.theme-galaxy .shape-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-galaxy .shape-card:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+body.theme-galaxy .shape-preview {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Bubble */
+body.theme-galaxy .shapes-bubble {
+    color: #ffd700;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    background: rgba(10, 10, 20, 0.9);
+}
+
+body.theme-galaxy .shapes-bubble:hover {
+    background: #000;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+}
+
+/* Separators */
+body.theme-galaxy .separator,
+body.theme-galaxy .separator-horizontal,
+body.theme-galaxy .prop-divider,
+body.theme-galaxy .sidebar-header,
+body.theme-galaxy #properties-panel h3,
+body.theme-galaxy .modal-header {
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.2);
+    /* For separators using bg */
+}
+
+body.theme-galaxy .sidebar-header,
+body.theme-galaxy #properties-panel h3,
+body.theme-galaxy .modal-header {
+    background: transparent;
+    /* Reset bg for headers */
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
 
 canvas {
     display: block;
@@ -580,6 +783,23 @@ canvas {
 .setting-item input[type="number"]:focus {
     outline: none;
     border-color: #00ffff;
+}
+
+.theme-select {
+    width: 120px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.theme-select option {
+    background: #1a1a2e;
+    color: #fff;
 }
 
 /* GUI Flip Styles */

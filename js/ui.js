@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { state } from './state.js';
 import { createMesh } from './objects.js';
 import { exportSTL } from './exporter.js';
-import { updateGrid, scene } from './scene.js';
+import { updateGrid, scene, setBackgroundTheme } from './scene.js';
 import { selectObject, onSelectionChange } from './selection.js';
 import { saveState, undo, redo } from './history.js';
 import { alignTool } from './alignTool.js';
@@ -247,6 +247,25 @@ export function initUI() {
         flipGuiBtn.addEventListener('click', () => {
             document.body.classList.toggle('gui-flipped');
             saveState(); // Save preference if we were persisting it (not implemented yet but good practice)
+        });
+    }
+
+    // Theme Select
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (e) => {
+            const theme = e.target.value;
+
+            // Remove all theme classes
+            document.body.classList.remove('theme-galaxy', 'theme-dark');
+
+            // Add selected theme class if not default
+            if (theme !== 'default') {
+                document.body.classList.add(`theme-${theme}`);
+            }
+
+            setBackgroundTheme(theme);
+            saveState();
         });
     }
 
@@ -528,6 +547,9 @@ async function combineObjects() {
         return;
     }
 
+    // Force update of world matrices for all objects to ensure accurate positions
+    state.selectedObjects.forEach(obj => obj.updateMatrixWorld(true));
+
     // Calculate the center/reference point of all selected objects
     const boundingBox = new THREE.Box3();
     state.selectedObjects.forEach(obj => {
@@ -551,6 +573,7 @@ async function combineObjects() {
 
         const { SUBTRACTION, ADDITION, Brush, Evaluator } = CSG;
         const evaluator = new Evaluator();
+        evaluator.attributes = ['position', 'normal', 'uv'];
 
         // Helper to create a brush with applied transforms
         function createBrushFromObject(obj) {
@@ -569,21 +592,18 @@ async function combineObjects() {
 
             // Ensure UVs are present (required by CSG)
             if (!geometry.attributes.uv) {
-                console.log('Adding dummy UVs to geometry');
                 const count = geometry.attributes.position.count;
                 const uvs = new Float32Array(count * 2);
                 geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-            } else {
-                console.log('Geometry already has UVs');
             }
 
-            console.log('Geometry attributes:', Object.keys(geometry.attributes));
-
-            // Apply world transform to geometry
-            const matrix = obj.matrixWorld.clone();
-            geometry.applyMatrix4(matrix);
-
             const brush = new Brush(geometry);
+
+            // Copy transforms instead of baking matrix
+            brush.position.copy(obj.position);
+            brush.rotation.copy(obj.rotation);
+            brush.scale.copy(obj.scale);
+
             brush.updateMatrixWorld();
             return brush;
         }
