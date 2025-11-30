@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinkercad Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.0/build/index.module.js",
+                "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.16/build/index.module.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="toolbar">
+        <div class="toolbar-group">
+            <button id="add-box" title="Add Box">📦</button>
+            <button id="add-cylinder" title="Add Cylinder">🛢️</button>
+            <button id="add-sphere" title="Add Sphere">🔵</button>
+        </div>
+        <div class="separator"></div>
+        <div class="toolbar-group">
+            <button id="align-tool" title="Align Objects" disabled>⊞ Align</button>
+            <button id="combine-tool" title="Combine Objects" disabled>⊕ Combine</button>
+        </div>
+        <div class="separator"></div>
+        <div class="toolbar-group">
+            <button id="export-stl" title="Export STL">⬇️ Export</button>
+        </div>
+    </div>
+
+
+
+    <div id="properties-panel">
+        <h3>Properties</h3>
+        <div id="no-selection">Select an object</div>
+        <div id="object-properties" style="display: none;">
+            <label>
+                Name: <input type="text" id="object-name" placeholder="Unnamed Object">
+            </label>
+            <div class="separator-horizontal"></div>
+            <label>
+                Color: <input type="color" id="object-color">
+            </label>
+            <div class="separator-horizontal"></div>
+            <div id="type-container">
+                <label>Type:</label>
+                <div class="type-buttons">
+                    <button id="type-solid" class="type-btn active">Solid</button>
+                    <button id="type-hole" class="type-btn">Hole</button>
+                </div>
+            </div>
+            <div class="separator-horizontal"></div>
+            <div id="dimensions-container">
+                <label>
+                    W (mm): <input type="number" id="object-width" step="0.1">
+                </label>
+                <label>
+                    H (mm): <input type="number" id="object-height" step="0.1">
+                </label>
+                <label>
+                    D (mm): <input type="number" id="object-depth" step="0.1">
+                </label>
+            </div>
+            <div class="separator-horizontal"></div>
+            <div id="movement-container">
+                <h4>Position Offset (mm)</h4>
+                <label>
+                    X: <input type="number" id="offset-x" step="0.1" value="0">
+                </label>
+                <label>
+                    Y: <input type="number" id="offset-y" step="0.1" value="0">
+                </label>
+                <label>
+                    Z: <input type="number" id="offset-z" step="0.1" value="0">
+                </label>
+            </div>
+            <div class="separator-horizontal"></div>
+            <div id="rotation-container">
+                <h4>Rotation (degrees)</h4>
+                <label>
+                    X: <input type="number" id="rotate-x" step="1" value="0">
+                </label>
+                <label>
+                    Y: <input type="number" id="rotate-y" step="1" value="0">
+                </label>
+                <label>
+                    Z: <input type="number" id="rotate-z" step="1" value="0">
+                </label>
+            </div>
+            <button id="uncombine-object" style="display: none;">Uncombine</button>
+            <button id="delete-object">Delete</button>
+        </div>
+    </div>
+
+    <div id="settings-bar">
+        <div class="setting-group">
+            <label>Snap Grid:</label>
+            <input type="number" id="snap-setting" value="1.0" step="0.1" min="0"> mm
+        </div>
+        <div class="separator"></div>
+        <div class="setting-group">
+            <label>Grid Size:</label>
+            <input type="number" id="grid-size" value="200" step="10"> mm
+        </div>
+    </div>
+
+    <script type="module" src="main.js?v=2"></script>
+</body>
+
+</html>

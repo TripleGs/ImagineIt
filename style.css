@@ -1,0 +1,282 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f0f0;
+}
+
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+#toolbar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 4px;
+}
+
+#toolbar button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    color: #444;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+#toolbar button:hover {
+    background: #f5f5f5;
+    border-color: #eee;
+}
+
+#toolbar button.active {
+    /* This seems to be used for 'enabled' state in original code, 
+       but typically 'active' means pressed. 
+       Keeping it to avoid breaking existing logic if any. */
+    background: #e0f7fa;
+    color: #009688;
+    border-color: #b2dfdb;
+}
+
+#toolbar button.active-tool {
+    background: #006064;
+    color: white;
+    border-color: #006064;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#toolbar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: transparent;
+}
+
+#toolbar button:disabled:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
+#toolbar button#export-stl,
+#toolbar button#align-tool,
+#toolbar button#combine-tool {
+    width: auto;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 6px;
+}
+
+.separator {
+    width: 1px;
+    height: 24px;
+    background: #ddd;
+}
+
+.separator-horizontal {
+    height: 1px;
+    width: 100%;
+    background: #eee;
+    margin: 10px 0;
+}
+
+#properties-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 250px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#properties-panel h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+#object-properties {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #555;
+}
+
+input[type="color"] {
+    border: none;
+    width: 40px;
+    height: 25px;
+    cursor: pointer;
+}
+
+input[type="number"] {
+    width: 60px;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: right;
+}
+
+#delete-object,
+#uncombine-object {
+    margin-top: 10px;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#delete-object {
+    background: #d32f2f;
+}
+
+#delete-object:hover {
+    background: #b71c1c;
+}
+
+#uncombine-object {
+    background: #1976d2;
+    margin-bottom: 8px;
+}
+
+#uncombine-object:hover {
+    background: #1565c0;
+}
+
+#settings-bar {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+}
+
+.setting-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+select {
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#grid-size,
+#snap-setting {
+    width: 60px;
+}
+
+#dimensions-container,
+#movement-container,
+#rotation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#movement-container h4,
+#rotation-container h4 {
+    margin: 0;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+}
+
+input[type="text"] {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+
+
+#type-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#type-container label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.type-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.type-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
+}
+
+.type-btn.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    color: #1976d2;
+}
+
+.type-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
