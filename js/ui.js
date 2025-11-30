@@ -14,6 +14,22 @@ function updateOffsetDisplay(offset) {
     document.getElementById('offset-z').value = offset.z.toFixed(2);
 }
 
+function normalizeGeometry(geometry) {
+    geometry.computeBoundingBox();
+    const center = new THREE.Vector3();
+    geometry.boundingBox.getCenter(center);
+    geometry.translate(-center.x, -center.y, -center.z);
+
+    // Normalize scale roughly to 20 units
+    const size = new THREE.Vector3();
+    geometry.boundingBox.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (maxDim > 0) {
+        const scale = 20 / maxDim;
+        geometry.scale(scale, scale, scale);
+    }
+}
+
 function addListener(id, event, handler) {
     const el = document.getElementById(id);
     if (el) {
@@ -73,22 +89,11 @@ export function initUI() {
 
                 // Adjust geometry center/scale if needed for STLs
                 if (shape.type === 'stl') {
-                    geometry.computeBoundingBox();
-                    const center = new THREE.Vector3();
-                    geometry.boundingBox.getCenter(center);
-                    geometry.translate(-center.x, -center.y, -center.z);
-
-                    // Normalize scale roughly to 20 units
-                    const size = new THREE.Vector3();
-                    geometry.boundingBox.getSize(size);
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    if (maxDim > 0) {
-                        const scale = 20 / maxDim;
-                        geometry.scale(scale, scale, scale);
-                    }
+                    normalizeGeometry(geometry);
                 }
 
-                createMesh(geometry, Math.random() * 0xffffff, position, shape.name);
+                const mesh = createMesh(geometry, Math.random() * 0xffffff, position, shape.name);
+                mesh.userData.shapeId = shape.id;
             } catch (error) {
                 console.error('Error adding shape:', error);
                 alert(`Failed to add ${shape.name}`);
@@ -526,6 +531,18 @@ async function combineObjects() {
                 geometry.computeVertexNormals();
             }
 
+            // Ensure UVs are present (required by CSG)
+            if (!geometry.attributes.uv) {
+                console.log('Adding dummy UVs to geometry');
+                const count = geometry.attributes.position.count;
+                const uvs = new Float32Array(count * 2);
+                geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            } else {
+                console.log('Geometry already has UVs');
+            }
+
+            console.log('Geometry attributes:', Object.keys(geometry.attributes));
+
             // Apply world transform to geometry
             const matrix = obj.matrixWorld.clone();
             geometry.applyMatrix4(matrix);
@@ -563,6 +580,10 @@ async function combineObjects() {
 
         // Create new mesh from result
         const resultGeometry = resultBrush.geometry;
+
+        // Center the geometry
+        resultGeometry.translate(-center.x, -center.y, -center.z);
+
         const resultMaterial = new THREE.MeshStandardMaterial({
             color: solids[0].material.color,
             transparent: false,
@@ -570,7 +591,7 @@ async function combineObjects() {
         });
 
         const resultMesh = new THREE.Mesh(resultGeometry, resultMaterial);
-        resultMesh.position.set(0, 0, 0);
+        resultMesh.position.copy(center);
         resultMesh.rotation.set(0, 0, 0);
         resultMesh.scale.set(1, 1, 1);
         resultMesh.castShadow = true;
@@ -626,35 +647,46 @@ function serializeObjectForUncombine(obj) {
         worldMatrix: worldMatrix.toArray(),
         userData: {
             name: obj.userData.name,
-            isSolid: obj.userData.isSolid
+            isSolid: obj.userData.isSolid,
+            shapeId: obj.userData.shapeId
         },
         castShadow: obj.castShadow,
         receiveShadow: obj.receiveShadow
     };
 }
 
-function deserializeObjectForUncombine(data, combinedObject) {
+async function deserializeObjectForUncombine(data, combinedObject) {
     let geometry;
-    switch (data.geometry.type) {
-        case 'BoxGeometry':
-            const bp = data.geometry.parameters;
-            geometry = new THREE.BoxGeometry(bp.width, bp.height, bp.depth);
-            break;
-        case 'CylinderGeometry':
-            const cp = data.geometry.parameters;
-            geometry = new THREE.CylinderGeometry(
-                cp.radiusTop, cp.radiusBottom, cp.height, cp.radialSegments
-            );
-            break;
-        case 'SphereGeometry':
-            const sp = data.geometry.parameters;
-            geometry = new THREE.SphereGeometry(
-                sp.radius, sp.widthSegments, sp.heightSegments
-            );
-            break;
-        default:
-            console.warn('Unknown geometry type:', data.geometry.type);
-            geometry = new THREE.BoxGeometry(1, 1, 1);
+    if (data.userData.shapeId) {
+        try {
+            geometry = await shapeManager.loadShapeGeometry(data.userData.shapeId);
+            normalizeGeometry(geometry);
+        } catch (e) {
+            console.error('Failed to load shape geometry:', e);
+            geometry = new THREE.BoxGeometry(20, 20, 20);
+        }
+    } else {
+        switch (data.geometry.type) {
+            case 'BoxGeometry':
+                const bp = data.geometry.parameters;
+                geometry = new THREE.BoxGeometry(bp.width, bp.height, bp.depth);
+                break;
+            case 'CylinderGeometry':
+                const cp = data.geometry.parameters;
+                geometry = new THREE.CylinderGeometry(
+                    cp.radiusTop, cp.radiusBottom, cp.height, cp.radialSegments
+                );
+                break;
+            case 'SphereGeometry':
+                const sp = data.geometry.parameters;
+                geometry = new THREE.SphereGeometry(
+                    sp.radius, sp.widthSegments, sp.heightSegments
+                );
+                break;
+            default:
+                console.warn('Unknown geometry type:', data.geometry.type);
+                geometry = new THREE.BoxGeometry(1, 1, 1);
+        }
     }
 
     const material = new THREE.MeshStandardMaterial({
@@ -686,7 +718,7 @@ function deserializeObjectForUncombine(data, combinedObject) {
     return mesh;
 }
 
-function uncombineObject() {
+async function uncombineObject() {
     if (!state.selectedObject || !state.selectedObject.userData.isCombined) {
         return;
     }
@@ -698,12 +730,12 @@ function uncombineObject() {
 
     // Restore original objects at their current transformed positions
     const restoredObjects = [];
-    originalObjectsData.forEach(objData => {
-        const mesh = deserializeObjectForUncombine(objData, combinedObject);
+    for (const objData of originalObjectsData) {
+        const mesh = await deserializeObjectForUncombine(objData, combinedObject);
         scene.add(mesh);
         state.objects.push(mesh);
         restoredObjects.push(mesh);
-    });
+    }
 
     // Remove combined object
     scene.remove(combinedObject);
