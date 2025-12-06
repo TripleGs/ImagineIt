@@ -6,25 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tinkercad Clone</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.0/build/index.module.js",
-                "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.16/build/index.module.js"
-            }
-        }
-    </script>
+
 </head>
 
 <body>
     <div id="shape-sidebar" class="sidebar open">
         <div class="sidebar-header">
             <h3>Shapes</h3>
-            <button id="minimize-sidebar" title="Minimize"><span class="material-symbols-rounded">remove</span></button>
+            <button id="minimize-sidebar" title="Minimize">─</button>
         </div>
         <div id="shape-grid" class="shape-grid">
             <!-- Shapes will be populated here -->
@@ -32,7 +21,7 @@
     </div>
 
     <button id="shapes-bubble" class="shapes-bubble" title="Open Shapes">
-        <span class="material-symbols-rounded" style="font-size: 24px;">view_in_ar</span>
+        <span style="font-size: 24px;">📦</span>
     </button>
 
     <div id="toolbar">
@@ -41,19 +30,13 @@
         </div>
         <div class="separator"></div>
         <div class="toolbar-group">
-            <button id="align-tool" title="Align Objects" disabled><span
-                    class="material-symbols-rounded">align_horizontal_center</span> Align</button>
-            <button id="combine-tool" title="Combine Objects" disabled><span
-                    class="material-symbols-rounded">group_work</span> Combine</button>
+            <button id="align-tool" title="Align Objects" disabled>⊞ Align</button>
+            <button id="combine-tool" title="Combine Objects" disabled>⊕ Combine</button>
+            <button id="face-snap-tool" title="Snap Faces">📐 Snap Faces</button>
         </div>
         <div class="separator"></div>
         <div class="toolbar-group">
-            <button id="export-stl" title="Export STL"><span class="material-symbols-rounded">download</span>
-                Export</button>
-        </div>
-        <div class="separator"></div>
-        <div class="toolbar-group">
-            <button id="settings-btn" title="Settings"><span class="material-symbols-rounded">settings</span></button>
+            <button id="export-stl" title="Export STL">⬇️ Export</button>
         </div>
     </div>
 
@@ -72,11 +55,8 @@
             <!-- Type Selector -->
             <div class="prop-row type-row">
                 <div class="type-buttons segmented">
-                    <button id="type-solid" class="type-btn active"><span class="material-symbols-rounded"
-                            style="font-size: 18px; vertical-align: middle;">check_box_outline_blank</span>
-                        Solid</button>
-                    <button id="type-hole" class="type-btn"><span class="material-symbols-rounded"
-                            style="font-size: 18px; vertical-align: middle;">texture</span> Hole</button>
+                    <button id="type-solid" class="type-btn active">Solid</button>
+                    <button id="type-hole" class="type-btn">Hole</button>
                 </div>
             </div>
 
@@ -113,46 +93,19 @@
         </div>
     </div>
 
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button id="close-settings" class="close-btn"><span
-                        class="material-symbols-rounded">close</span></button>
-            </div>
-
-
-            <div class="setting-item">
-                <label>Theme</label>
-                <select id="theme-select" class="theme-select">
-                    <option value="default">Default</option>
-                    <option value="dark">Dark</option>
-                    <option value="galaxy">Galaxy</option>
-                </select>
-            </div>
-
-            <div class="separator-horizontal"></div>
-
-            <div class="setting-item">
-                <label>Flip GUI</label>
-                <button id="flip-gui-btn" class="action-btn secondary">Flip Interface</button>
-            </div>
-
-            <div class="separator-horizontal"></div>
-
-            <div class="setting-item">
-                <label>Snap Grid (mm)</label>
-                <input type="number" id="snap-setting" value="1.0" step="0.1" min="0">
-            </div>
-
-            <div class="setting-item">
-                <label>Grid Size (mm)</label>
-                <input type="number" id="grid-size" value="200" step="10">
-            </div>
+    <div id="settings-bar">
+        <div class="setting-group">
+            <label>Snap Grid:</label>
+            <input type="number" id="snap-setting" value="1.0" step="0.1" min="0"> mm
+        </div>
+        <div class="separator"></div>
+        <div class="setting-group">
+            <label>Grid Size:</label>
+            <input type="number" id="grid-size" value="200" step="10"> mm
         </div>
     </div>
 
-    <script type="module" src="main.js?v=2"></script>
+    <script type="module" src="main.js"></script>
 </body>
 
 </html>

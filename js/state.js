@@ -16,5 +16,6 @@ export const state = {
     snapValue: 1.0,
     history: [],
     historyIndex: -1,
-    maxHistorySize: 100
+    maxHistorySize: 100,
+    toolMode: 'select' // 'select' | 'face-snap'
 };

@@ -21,6 +21,7 @@ export function initSelection(cam, rend) {
 }
 
 function onPointerDown(event) {
+    if (state.toolMode !== 'select') return;
     if (event.target !== renderer.domElement) return;
 
     const rect = renderer.domElement.getBoundingClientRect();

@@ -3,219 +3,7 @@ body {
     overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f0f0;
-    color: #e0e0e0;
-    transition: background-color 0.5s;
 }
-
-/* Galaxy Theme */
-body.theme-galaxy {
-    background-color: #000000;
-    /* Background handled by Three.js */
-}
-
-/* Dark Theme */
-body.theme-dark {
-    background-color: #1a1a2e;
-    color: #e0e0e0;
-}
-
-/* Dark Theme UI */
-body.theme-dark .glass-panel,
-body.theme-dark #toolbar,
-body.theme-dark #properties-panel,
-body.theme-dark .sidebar,
-body.theme-dark #settings-modal .modal-content {
-    background: rgba(30, 30, 45, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-}
-
-body.theme-dark .sidebar-header,
-body.theme-dark #properties-panel h3,
-body.theme-dark .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-body.theme-dark input[type="text"],
-body.theme-dark input[type="number"],
-body.theme-dark .theme-select {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-body.theme-dark input:focus,
-body.theme-dark .theme-select:focus {
-    border-color: #4dd0e1;
-    box-shadow: 0 0 8px rgba(77, 208, 225, 0.2);
-}
-
-body.theme-dark #toolbar button.active,
-body.theme-dark .type-btn.active {
-    color: #4dd0e1;
-    border-color: rgba(77, 208, 225, 0.5);
-    background: rgba(77, 208, 225, 0.1);
-    box-shadow: 0 0 10px rgba(77, 208, 225, 0.2);
-}
-
-body.theme-dark #toolbar button.active-tool {
-    background: linear-gradient(135deg, #006064, #0097a7);
-    color: white;
-    border-color: #4dd0e1;
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
-}
-
-body.theme-dark .shapes-bubble {
-    background: rgba(30, 30, 45, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #4dd0e1;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-}
-
-@keyframes galaxyMove {
-    0% {
-        background-position: 0 0, 0 0, 0 0, 0 0;
-    }
-
-    100% {
-        background-position: 0 0, 550px 550px, -350px 350px, 250px -250px;
-    }
-}
-
-/* Galaxy UI Accents */
-body.theme-galaxy .glass-panel,
-body.theme-galaxy #toolbar,
-body.theme-galaxy #properties-panel,
-body.theme-galaxy .sidebar,
-body.theme-galaxy #settings-modal .modal-content {
-    background: rgba(5, 5, 10, 0.85);
-    /* Darker background for contrast */
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    /* Gold border */
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-}
-
-/* Text Colors */
-body.theme-galaxy,
-body.theme-galaxy h3,
-body.theme-galaxy h2,
-body.theme-galaxy label,
-body.theme-galaxy .transform-label,
-body.theme-galaxy .shape-name {
-    color: #ffffff;
-    text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
-}
-
-body.theme-galaxy .transform-label {
-    color: #ffd700;
-    /* Gold labels */
-}
-
-/* Buttons */
-body.theme-galaxy #toolbar button,
-body.theme-galaxy .type-btn,
-body.theme-galaxy .action-btn,
-body.theme-galaxy .close-btn,
-body.theme-galaxy #minimize-sidebar {
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-body.theme-galaxy #toolbar button:hover,
-body.theme-galaxy .type-btn:hover,
-body.theme-galaxy .action-btn:hover,
-body.theme-galaxy .close-btn:hover,
-body.theme-galaxy #minimize-sidebar:hover {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: rgba(255, 215, 0, 0.5);
-    color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-}
-
-/* Active States */
-body.theme-galaxy #toolbar button.active,
-body.theme-galaxy .type-btn.active {
-    color: #ffd700;
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-    background: rgba(255, 215, 0, 0.1);
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
-}
-
-body.theme-galaxy #toolbar button.active-tool {
-    background: linear-gradient(135deg, #b8860b, #ffd700);
-    color: #000;
-    border-color: #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-    text-shadow: none;
-}
-
-/* Inputs */
-body.theme-galaxy input[type="text"],
-body.theme-galaxy input[type="number"],
-body.theme-galaxy .theme-select {
-    background: rgba(0, 0, 0, 0.6);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #ffd700;
-}
-
-body.theme-galaxy input:focus,
-body.theme-galaxy .theme-select:focus {
-    border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-/* Shape Cards */
-body.theme-galaxy .shape-card {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-body.theme-galaxy .shape-card:hover {
-    background: rgba(255, 215, 0, 0.1);
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-}
-
-body.theme-galaxy .shape-preview {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Bubble */
-body.theme-galaxy .shapes-bubble {
-    color: #ffd700;
-    border-color: #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-    background: rgba(10, 10, 20, 0.9);
-}
-
-body.theme-galaxy .shapes-bubble:hover {
-    background: #000;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
-}
-
-/* Separators */
-body.theme-galaxy .separator,
-body.theme-galaxy .separator-horizontal,
-body.theme-galaxy .prop-divider,
-body.theme-galaxy .sidebar-header,
-body.theme-galaxy #properties-panel h3,
-body.theme-galaxy .modal-header {
-    border-color: rgba(255, 215, 0, 0.2);
-    background: rgba(255, 215, 0, 0.2);
-    /* For separators using bg */
-}
-
-body.theme-galaxy .sidebar-header,
-body.theme-galaxy #properties-panel h3,
-body.theme-galaxy .modal-header {
-    background: transparent;
-    /* Reset bg for headers */
-    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-}
-
 
 canvas {
     display: block;
@@ -223,30 +11,18 @@ canvas {
     height: 100vh;
 }
 
-/* Glassmorphism Base */
-.glass-panel {
-    background: rgba(20, 20, 35, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
 #toolbar {
     position: absolute;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
+    background: white;
     padding: 8px;
-    border-radius: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     gap: 12px;
     align-items: center;
-    background: rgba(20, 20, 35, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .toolbar-group {
@@ -255,95 +31,101 @@ canvas {
 }
 
 #toolbar button {
-    min-width: 40px;
+    width: 40px;
     height: 40px;
-    padding: 0 12px;
+    padding: 0;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.05);
-    color: #e0e0e0;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    color: #444;
+    border: 1px solid transparent;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     transition: all 0.2s;
 }
 
 #toolbar button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+    background: #f5f5f5;
+    border-color: #eee;
 }
 
 #toolbar button.active {
-    background: rgba(0, 255, 255, 0.15);
-    color: #00ffff;
-    border-color: rgba(0, 255, 255, 0.3);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    /* This seems to be used for 'enabled' state in original code, 
+       but typically 'active' means pressed. 
+       Keeping it to avoid breaking existing logic if any. */
+    background: #e0f7fa;
+    color: #009688;
+    border-color: #b2dfdb;
 }
 
 #toolbar button.active-tool {
-    background: linear-gradient(135deg, #006064, #0097a7);
+    background: #006064;
     color: white;
-    border-color: #4dd0e1;
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+    border-color: #006064;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 #toolbar button:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
     background: transparent;
-    box-shadow: none;
+}
+
+#toolbar button:disabled:hover {
+    background: transparent;
     border-color: transparent;
+}
+
+#toolbar button#export-stl,
+#toolbar button#align-tool,
+#toolbar button#combine-tool {
+    width: auto;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 6px;
 }
 
 .separator {
     width: 1px;
     height: 24px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #ddd;
 }
 
 .separator-horizontal {
     height: 1px;
     width: 100%;
-    background: rgba(255, 255, 255, 0.1);
+    background: #eee;
     margin: 10px 0;
 }
 
 #properties-panel {
     position: absolute;
-    display: none;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
-    width: 240px;
-    padding: 16px;
-    border-radius: 12px;
+    width: 220px;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     font-size: 13px;
-    background: rgba(20, 20, 35, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 #properties-panel h3 {
     margin-top: 0;
-    margin-bottom: 12px;
-    color: #fff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 1px solid #eee;
     padding-bottom: 8px;
-    font-size: 16px;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    font-size: 15px;
 }
 
 #object-properties {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .prop-row {
@@ -358,108 +140,79 @@ canvas {
 
 .name-input {
     flex: 1;
-    padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 6px;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     font-size: 13px;
     width: 0;
-    transition: border-color 0.2s;
-}
-
-.name-input:focus {
-    outline: none;
-    border-color: #00ffff;
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+    /* Allow shrinking */
 }
 
 .color-input {
-    width: 34px;
-    height: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 30px;
+    height: 26px;
+    border: none;
     padding: 0;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 4px;
     overflow: hidden;
-    background: transparent;
 }
 
 .type-buttons.segmented {
     display: flex;
     width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 3px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #f0f0f0;
+    padding: 2px;
+    border-radius: 6px;
 }
 
 .type-btn {
     flex: 1;
-    padding: 6px;
+    padding: 4px;
     font-size: 12px;
     font-weight: 500;
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: 6px;
-    color: #aaa;
+    border-radius: 4px;
+    color: #666;
     transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.type-btn:hover {
-    color: #fff;
 }
 
 .type-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: #00ffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    background: white;
+    color: #1976d2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .prop-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 6px 0;
+    background: #eee;
+    margin: 4px 0;
 }
 
 .transform-grid {
     display: grid;
     grid-template-columns: 30px 1fr 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
 }
 
 .transform-label {
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     color: #888;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .transform-grid input[type="number"] {
     width: 100%;
-    padding: 4px 6px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
+    padding: 3px 4px;
+    border: 1px solid #ddd;
     border-radius: 4px;
     text-align: right;
     font-size: 12px;
-    appearance: textfield;
     -moz-appearance: textfield;
-    transition: border-color 0.2s;
-}
-
-.transform-grid input[type="number"]:focus {
-    outline: none;
-    border-color: #00ffff;
 }
 
 .transform-grid input[type="number"]::-webkit-outer-spin-button,
@@ -469,42 +222,36 @@ canvas {
 }
 
 .actions-row {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .action-btn {
     flex: 1;
-    padding: 8px;
+    padding: 6px;
     font-size: 12px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 500;
+    transition: background 0.2s;
 }
 
 .action-btn.danger {
-    background: rgba(255, 50, 50, 0.15);
-    color: #ff5252;
-    border: 1px solid rgba(255, 50, 50, 0.3);
+    background: #ffebee;
+    color: #c62828;
 }
 
 .action-btn.danger:hover {
-    background: rgba(255, 50, 50, 0.25);
-    box-shadow: 0 0 10px rgba(255, 50, 50, 0.3);
+    background: #ffcdd2;
 }
 
 .action-btn.secondary {
-    background: rgba(50, 150, 255, 0.15);
-    color: #448aff;
-    border: 1px solid rgba(50, 150, 255, 0.3);
+    background: #e3f2fd;
+    color: #1565c0;
 }
 
 .action-btn.secondary:hover {
-    background: rgba(50, 150, 255, 0.25);
-    box-shadow: 0 0 10px rgba(50, 150, 255, 0.3);
+    background: #bbdefb;
 }
 
 /* Sidebar Styles */
@@ -514,12 +261,9 @@ canvas {
     left: 20px;
     width: 280px;
     height: calc(100vh - 40px);
-    background: rgba(20, 20, 35, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -541,11 +285,9 @@ canvas {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: rgba(20, 20, 35, 0.9);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #00ffff;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    background: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -563,42 +305,39 @@ canvas {
 
 .shapes-bubble:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    background: rgba(30, 30, 50, 0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .sidebar-header {
     padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255, 255, 255, 0.02);
+    background: #f9f9f9;
 }
 
 .sidebar-header h3 {
     margin: 0;
-    color: #fff;
+    color: #333;
     font-size: 18px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 #minimize-sidebar {
     background: transparent;
     border: none;
+    font-size: 18px;
     cursor: pointer;
-    color: #aaa;
-    padding: 4px;
+    color: #666;
+    padding: 4px 8px;
     border-radius: 4px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: background 0.2s;
+    font-weight: bold;
 }
 
 #minimize-sidebar:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: #eee;
+    color: #333;
 }
 
 .shape-grid {
@@ -611,25 +350,11 @@ canvas {
     align-content: start;
 }
 
-/* Scrollbar styling */
-.shape-grid::-webkit-scrollbar {
-    width: 6px;
-}
-
-.shape-grid::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.shape-grid::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-}
-
 .shape-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 8px;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -640,21 +365,19 @@ canvas {
 
 .shape-card:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(0, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #b2dfdb;
 }
 
 .shape-preview {
     width: 100%;
     aspect-ratio: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+    background: #f5f5f5;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    color: #aaa;
 }
 
 .shape-preview img {
@@ -665,156 +388,7 @@ canvas {
 
 .shape-name {
     font-size: 13px;
-    color: #ccc;
+    color: #555;
     font-weight: 500;
     text-align: center;
-}
-
-#settings-bar {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(20, 20, 35, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px 16px;
-    border-radius: 20px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    color: #aaa;
-    font-size: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-#settings-bar input:focus {
-    outline: none;
-    border-color: #00ffff;
-}
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.open {
-    display: flex;
-}
-
-.modal-content {
-    background: rgba(20, 20, 35, 0.9);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 24px;
-    width: 300px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-    color: #fff;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 10px;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 20px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.close-btn {
-    background: transparent;
-    border: none;
-    color: #aaa;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.setting-item label {
-    font-size: 14px;
-    color: #ccc;
-}
-
-.setting-item input[type="number"] {
-    width: 80px;
-    padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 6px;
-    text-align: right;
-}
-
-.setting-item input[type="number"]:focus {
-    outline: none;
-    border-color: #00ffff;
-}
-
-.theme-select {
-    width: 120px;
-    padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
-}
-
-.theme-select option {
-    background: #1a1a2e;
-    color: #fff;
-}
-
-/* GUI Flip Styles */
-body.gui-flipped .sidebar {
-    left: auto;
-    right: 20px;
-    transform-origin: bottom right;
-}
-
-body.gui-flipped #properties-panel {
-    right: auto;
-    left: 20px;
-}
-
-body.gui-flipped .shapes-bubble {
-    left: auto;
-    right: 20px;
 }

@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { state } from './state.js';
 import { createMesh } from './objects.js';
 import { exportSTL } from './exporter.js';
-import { updateGrid, scene, setBackgroundTheme } from './scene.js';
+import { updateGrid, scene } from './scene.js';
 import { selectObject, onSelectionChange } from './selection.js';
 import { saveState, undo, redo } from './history.js';
 import { alignTool } from './alignTool.js';
 import { shapeManager } from './shapeManager.js';
+import { faceSnapTool } from './faceSnapTool.js';
 
 function updateOffsetDisplay(offset) {
     document.getElementById('offset-x').value = offset.x.toFixed(2);
@@ -57,7 +58,7 @@ export function initUI() {
         previewContainer.className = 'shape-preview';
 
         // Add loading placeholder or icon initially
-        previewContainer.innerHTML = `<span class="material-symbols-rounded" style="font-size: 24px;">${shape.icon}</span>`;
+        previewContainer.innerHTML = `<span style="font-size: 24px;">${shape.icon}</span>`;
 
         const nameLabel = document.createElement('div');
         nameLabel.className = 'shape-name';
@@ -94,9 +95,40 @@ export function initUI() {
 
                 const mesh = createMesh(geometry, Math.random() * 0xffffff, position, shape.name);
                 mesh.userData.shapeId = shape.id;
+
+                // Apply initial rotation if defined
+                if (shape.initialRotation) {
+                    mesh.rotation.set(
+                        THREE.MathUtils.degToRad(shape.initialRotation[0]),
+                        THREE.MathUtils.degToRad(shape.initialRotation[1]),
+                        THREE.MathUtils.degToRad(shape.initialRotation[2])
+                    );
+                }
+
+                // Manual Grid Alignment
+                if (shape.yOffset !== undefined) {
+                    mesh.position.y = shape.yOffset;
+                } else {
+                    // Default behavior for other shapes (sit on ground based on size/default pos)
+                    // mesh.position.y = 10; // 10 is current default logic for random pos
+
+                    // Actually, let's keep the bounding box logic for NON-dice shapes if we want 
+                    // or just fallback to the random position height (10). 
+                    // User only complained about dice. 
+                    // Let's stick to the requested change: use manual offset if present.
+                    // But we should probably still try to snap basic shapes if they don't have offset?
+                    // Previous logic snapped EVERYTHING. 
+                    // Let's keep snapping for everything ELSE, but use offset if it exists.
+
+                    mesh.updateMatrixWorld();
+                    const box = new THREE.Box3().setFromObject(mesh);
+                    const minY = box.min.y;
+                    const shiftY = -minY;
+                    mesh.position.y += shiftY;
+                }
             } catch (error) {
                 console.error('Error adding shape:', error);
-                alert(`Failed to add ${shape.name}`);
+                alert(`Failed to add ${shape.name}: ${error.message}\n\n${error.stack}`);
             }
         });
 
@@ -218,57 +250,27 @@ export function initUI() {
         }
     });
 
-    // Settings
-    const settingsModal = document.getElementById('settings-modal');
-    const settingsBtn = document.getElementById('settings-btn');
-    const closeSettingsBtn = document.getElementById('close-settings');
-    const flipGuiBtn = document.getElementById('flip-gui-btn');
-
-    function openSettings() {
-        settingsModal.classList.add('open');
-    }
-
-    function closeSettings() {
-        settingsModal.classList.remove('open');
-    }
-
-    if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
-    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
-
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            closeSettings();
+    // Face Snap tool
+    addListener('face-snap-tool', 'click', () => {
+        const btn = document.getElementById('face-snap-tool');
+        if (state.toolMode === 'select') {
+            faceSnapTool.activate();
+            btn.classList.add('active-tool');
+        } else {
+            faceSnapTool.deactivate();
+            btn.classList.remove('active-tool');
         }
     });
 
-    // Flip GUI
-    if (flipGuiBtn) {
-        flipGuiBtn.addEventListener('click', () => {
-            document.body.classList.toggle('gui-flipped');
-            saveState(); // Save preference if we were persisting it (not implemented yet but good practice)
-        });
-    }
+    // Listen for manual tool deactivation
+    window.addEventListener('toolDeactivated', (e) => {
+        if (e.detail.tool === 'face-snap') {
+            document.getElementById('face-snap-tool').classList.remove('active-tool');
+        }
+    });
 
-    // Theme Select
-    const themeSelect = document.getElementById('theme-select');
-    if (themeSelect) {
-        themeSelect.addEventListener('change', (e) => {
-            const theme = e.target.value;
-
-            // Remove all theme classes
-            document.body.classList.remove('theme-galaxy', 'theme-dark');
-
-            // Add selected theme class if not default
-            if (theme !== 'default') {
-                document.body.classList.add(`theme-${theme}`);
-            }
-
-            setBackgroundTheme(theme);
-            saveState();
-        });
-    }
-
+    // Settings
+    // Settings
     addListener('snap-setting', 'change', (e) => {
         const val = parseFloat(e.target.value);
         state.snapValue = val;
@@ -339,9 +341,6 @@ function updateTypeButtons(isSolid) {
 }
 
 export function updatePropertiesPanel(objects) {
-    const panel = document.getElementById('properties-panel');
-    panel.style.display = 'block';
-
     document.getElementById('no-selection').style.display = 'none';
     document.getElementById('object-properties').style.display = 'flex';
 
@@ -451,9 +450,6 @@ export function updatePropertiesPanel(objects) {
 }
 
 export function hidePropertiesPanel() {
-    const panel = document.getElementById('properties-panel');
-    panel.style.display = 'none';
-
     document.getElementById('no-selection').style.display = 'block';
     document.getElementById('object-properties').style.display = 'none';
 
@@ -547,9 +543,6 @@ async function combineObjects() {
         return;
     }
 
-    // Force update of world matrices for all objects to ensure accurate positions
-    state.selectedObjects.forEach(obj => obj.updateMatrixWorld(true));
-
     // Calculate the center/reference point of all selected objects
     const boundingBox = new THREE.Box3();
     state.selectedObjects.forEach(obj => {
@@ -573,7 +566,6 @@ async function combineObjects() {
 
         const { SUBTRACTION, ADDITION, Brush, Evaluator } = CSG;
         const evaluator = new Evaluator();
-        evaluator.attributes = ['position', 'normal', 'uv'];
 
         // Helper to create a brush with applied transforms
         function createBrushFromObject(obj) {
@@ -592,18 +584,21 @@ async function combineObjects() {
 
             // Ensure UVs are present (required by CSG)
             if (!geometry.attributes.uv) {
+                console.log('Adding dummy UVs to geometry');
                 const count = geometry.attributes.position.count;
                 const uvs = new Float32Array(count * 2);
                 geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            } else {
+                console.log('Geometry already has UVs');
             }
 
+            console.log('Geometry attributes:', Object.keys(geometry.attributes));
+
+            // Apply world transform to geometry
+            const matrix = obj.matrixWorld.clone();
+            geometry.applyMatrix4(matrix);
+
             const brush = new Brush(geometry);
-
-            // Copy transforms instead of baking matrix
-            brush.position.copy(obj.position);
-            brush.rotation.copy(obj.rotation);
-            brush.scale.copy(obj.scale);
-
             brush.updateMatrixWorld();
             return brush;
         }
