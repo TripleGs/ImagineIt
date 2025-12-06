@@ -1,36 +1,77 @@
 import * as THREE from 'three';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
+
 class ShapeManager {
     constructor() {
         this.shapes = [
             {
                 id: 'box',
                 name: 'Box',
-                type: 'stl',
-                url: 'assets/box.stl',
-                icon: 'check_box_outline_blank'
+                type: 'primitive',
+                create: () => new THREE.BoxGeometry(20, 20, 20),
+                icon: '📦'
             },
             {
                 id: 'cylinder',
                 name: 'Cylinder',
-                type: 'stl',
-                url: 'assets/cylinder.stl',
-                icon: 'token'
+                type: 'primitive',
+                create: () => new THREE.CylinderGeometry(10, 10, 20, 32),
+                icon: '🛢️'
             },
             {
                 id: 'sphere',
                 name: 'Sphere',
-                type: 'stl',
-                url: 'assets/sphere.stl',
-                icon: 'circle'
+                type: 'primitive',
+                create: () => new THREE.SphereGeometry(10, 32, 32),
+                icon: '🔵'
             },
             {
                 id: 'tetrahedron',
                 name: 'Tetrahedron',
-                type: 'stl',
-                url: 'assets/tetrahedron.stl',
-                icon: 'change_history'
+                type: 'primitive',
+                create: () => new THREE.TetrahedronGeometry(15),
+                icon: '🔺',
+                initialRotation: [144, 12, -36],
+                yOffset: 5 // Apothem ~5
+            },
+            {
+                id: 'octahedron',
+                name: 'Octahedron (d8)',
+                type: 'primitive',
+                create: () => new THREE.OctahedronGeometry(15),
+                icon: '🔷',
+                initialRotation: [70, 52, 70],
+                yOffset: 9 // Apothem ~9
+            },
+            {
+                id: 'pentagonal_trapezohedron',
+                name: 'Pentagonal Trapezohedron (d10)',
+                type: 'primitive',
+                // Width ~26 (Radius 13), Height ~25 (HalfHeight 12.5) for "26, 25, 24" sizing
+                create: () => createPentagonalTrapezohedron(13, 12.5),
+                icon: '🔟',
+                // User requested rotation to show 44, -52, -102 in properties
+                initialRotation: [44, -52, -102],
+                yOffset: 8.57
+            },
+            {
+                id: 'dodecahedron',
+                name: 'Dodecahedron (d12)',
+                type: 'primitive',
+                create: () => new THREE.DodecahedronGeometry(15),
+                icon: '⬟',
+                initialRotation: [72, 27, 36],
+                yOffset: 12 // Apothem ~12
+            },
+            {
+                id: 'icosahedron',
+                name: 'Icosahedron (d20)',
+                type: 'primitive',
+                create: () => new THREE.IcosahedronGeometry(15),
+                icon: '🎲',
+                initialRotation: [0, 0, 111],
+                yOffset: 12 // Apothem ~12
             }
         ];
         this.loader = new STLLoader();
@@ -43,18 +84,20 @@ class ShapeManager {
     async loadShapeGeometry(shapeId) {
         const shape = this.shapes.find(s => s.id === shapeId);
         if (!shape) throw new Error(`Shape ${shapeId} not found`);
+        console.log(`Loading geometry for shape: ${shapeId}, type: ${shape.type}`);
+
 
         if (shape.type === 'primitive') {
             return shape.create();
-        } else if (shape.type === 'stl') {
-            return new Promise((resolve, reject) => {
-                this.loader.load(shape.url, (geometry) => {
-                    resolve(geometry);
-                }, undefined, (error) => {
-                    reject(error);
-                });
-            });
         }
+
+        return new Promise((resolve, reject) => {
+            this.loader.load(shape.url, (geometry) => {
+                resolve(geometry);
+            }, undefined, (error) => {
+                reject(error);
+            });
+        });
     }
 
     async generatePreview(shapeId) {
@@ -85,7 +128,8 @@ class ShapeManager {
         const material = new THREE.MeshStandardMaterial({
             color: 0x2196f3,
             roughness: 0.5,
-            metalness: 0.1
+            metalness: 0.1,
+            flatShading: shapeId === 'pentagonal_trapezohedron' // Better look for d10
         });
         const mesh = new THREE.Mesh(geometry, material);
 
@@ -124,6 +168,82 @@ class ShapeManager {
 
         return dataUrl;
     }
+}
+
+
+function createPentagonalTrapezohedron(radius, halfHeight) {
+    // Parameters H (half-height of poles) vs radius.
+    // User requested specific sizing generally around 25.
+    // We allow passing halfHeight (H) explicitly.
+    const H = halfHeight || radius * 1.5;
+
+    // Calculate h (offset of equator vertices) to ensure planarity
+    // h = H * (1 - cos(36)) / (1 + cos(36))
+    const angleStep = Math.PI / 5; // 36 degrees
+    const c = Math.cos(angleStep);
+    const h = H * (1 - c) / (1 + c);
+
+    const vertices = [];
+    const indices = [];
+
+    // Vertices
+    // 0: Top Pole
+    vertices.push(0, H, 0);
+    // 1: Bottom Pole
+    vertices.push(0, -H, 0);
+
+    // Equator Rings
+    // Ring A (Upper/Base) - 5 vertices
+    // Ring B (Lower/Cross) - 5 vertices
+    // Angles: A starts at 0. B starts at 36.
+
+    // We add them in order. Let's store indices for easier reference.
+    const ringA = [];
+    const ringB = [];
+
+    for (let i = 0; i < 5; i++) {
+        const thetaA = i * 2 * angleStep; // 0, 72, 144...
+        const thetaB = thetaA + angleStep; // 36, 108...
+
+        // Ring A
+        vertices.push(radius * Math.cos(thetaA), h, radius * Math.sin(thetaA));
+        ringA.push(2 + i * 2); // 2, 4, 6, 8, 10
+
+        // Ring B
+        vertices.push(radius * Math.cos(thetaB), -h, radius * Math.sin(thetaB));
+        ringB.push(2 + i * 2 + 1); // 3, 5, 7, 9, 11
+    }
+
+    // Indices
+    const topPole = 0;
+    const botPole = 1;
+
+    for (let i = 0; i < 5; i++) {
+        const aCurr = ringA[i];
+        const bCurr = ringB[i];
+        const aNext = ringA[(i + 1) % 5];
+        const bNext = ringB[(i + 1) % 5];
+
+        // Top Faces (Top, A_curr, B_curr, A_next)
+        // Normal must point OUT.
+        // T is peak. B is below A.
+        // T -> B -> A gives Out normal.
+        indices.push(topPole, bCurr, aCurr);
+        indices.push(topPole, aNext, bCurr);
+
+        // Bottom Faces (Bot, B_curr, A_next, B_next)
+        // Bot is Down.
+        // B -> A -> Bot gives Out normal.
+        indices.push(bCurr, aNext, botPole);
+        indices.push(aNext, bNext, botPole);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    return geometry;
 }
 
 export const shapeManager = new ShapeManager();

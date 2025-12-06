@@ -7,6 +7,7 @@ export let gridHelper;
 
 export function initScene() {
     // Scene Setup
+    console.log('scene.js: initScene called');
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
 

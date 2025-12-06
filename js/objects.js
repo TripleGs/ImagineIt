@@ -5,6 +5,7 @@ import { scene } from './scene.js';
 let objectCounter = { box: 0, cylinder: 0, sphere: 0 };
 
 export function createMesh(geometry, color, position, type = 'object') {
+    console.log('objects.js: createMesh called, scene is:', scene);
     const material = new THREE.MeshStandardMaterial({
         color: color,
         transparent: false,
