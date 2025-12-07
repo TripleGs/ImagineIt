@@ -4,65 +4,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tinkercad Clone</title>
+    <title>ImagineIt 3D</title>
     <link rel="stylesheet" href="style.css">
-
+    <!-- Preconnect for Google Fonts if decided later, using system fonts for now as per plan -->
 </head>
 
 <body>
-    <div id="shape-sidebar" class="sidebar open">
-        <div class="sidebar-header">
-            <h3>Shapes</h3>
-            <button id="minimize-sidebar" title="Minimize">─</button>
+    <!-- App Header -->
+    <header id="app-header">
+        <!-- Logo removed as per user request -->
+        <div class="header-controls">
+            <!-- Placeholder for future user controls or settings -->
+        </div>
+    </header>
+
+    <!-- Sidebar for Shapes -->
+    <div id="shape-sidebar" class="panel">
+        <div class="panel-header">
+            <span>Add Shapes</span>
+            <button id="minimize-sidebar" class="icon-btn" title="Close Sidebar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
         <div id="shape-grid" class="shape-grid">
             <!-- Shapes will be populated here -->
         </div>
     </div>
 
+    <!-- Toggle Button for Sidebar -->
     <button id="shapes-bubble" class="shapes-bubble" title="Open Shapes">
-        <span style="font-size: 24px;">📦</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+            </path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
     </button>
 
+    <!-- Main Toolbar -->
     <div id="toolbar">
         <div class="toolbar-group">
-            <!-- Shapes moved to sidebar -->
+            <!-- Undo/Redo are keyboard only for now based on previous code, 
+                  but we could add buttons if desired. Sticking to tools. -->
+            <button id="import-btn" class="icon-btn" title="Import File">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </button>
+            <button id="export-btn" class="icon-btn" title="Export File">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </button>
         </div>
         <div class="separator"></div>
         <div class="toolbar-group">
-            <button id="align-tool" title="Align Objects" disabled>⊞ Align</button>
-            <button id="combine-tool" title="Combine Objects" disabled>⊕ Combine</button>
-            <button id="face-snap-tool" title="Snap Faces">📐 Snap Faces</button>
-        </div>
-        <div class="separator"></div>
-        <div class="toolbar-group">
-            <button id="import-btn" title="Import File">📂 Import</button>
-            <button id="export-btn" title="Export File">💾 Export</button>
+            <button id="align-tool" class="icon-btn" title="Align Objects" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="21" y1="10" x2="3" y2="10"></line>
+                    <line x1="21" y1="6" x2="3" y2="6"></line>
+                    <line x1="21" y1="14" x2="3" y2="14"></line>
+                    <line x1="21" y1="18" x2="3" y2="18"></line>
+                </svg>
+            </button>
+            <button id="combine-tool" class="icon-btn" title="Combine Objects" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <rect x="11" y="4" width="2" height="12"></rect>
+                    <rect x="4" y="11" width="12" height="2"></rect>
+                </svg>
+            </button>
+            <button id="face-snap-tool" class="icon-btn" title="Snap Faces">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M7 21a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12a4 4 0 0 1-4 4zm0 0h12a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2.5">
+                    </path>
+                    <path d="M10 9V5"></path>
+                </svg>
+            </button>
         </div>
     </div>
 
-    <!-- Hidden File Input for Import -->
+    <!-- Hidden File Input -->
     <input type="file" id="file-input" accept=".stl,.imagine" style="display: none;">
 
     <!-- Export Modal -->
     <div id="export-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Export</h3>
+                <h3>Export Project</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Choose an export format:</p>
                 <div class="export-options">
                     <button id="export-imagine-btn" class="export-option-btn">
                         <span class="icon">✨</span>
                         <div class="text">
                             <span class="title">Imagine Project (.imagine)</span>
-                            <span class="desc">Save with all combine details and properties</span>
+                            <span class="desc">Save project with all history and properties</span>
                         </div>
                     </button>
                     <button id="export-stl-btn" class="export-option-btn">
-                        <span class="icon">🧊</span>
+                        <!-- STL Icon -->
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                </path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </span>
                         <div class="text">
                             <span class="title">3D Object (.stl)</span>
                             <span class="desc">Export geometry for 3D printing</span>
@@ -73,68 +142,66 @@
         </div>
     </div>
 
+    <!-- Properties Panel -->
+    <div id="properties-panel" class="panel" style="display: none;">
+        <div class="panel-header">
+            Properties
+        </div>
 
+        <div id="no-selection">Select an object to edit</div>
 
-    <div id="properties-panel">
-        <h3>Properties</h3>
-        <div id="no-selection">Select an object</div>
         <div id="object-properties" style="display: none;">
             <!-- Header: Name & Color -->
-            <div class="prop-row header-row">
-                <input type="text" id="object-name" placeholder="Unnamed Object" class="name-input">
-                <input type="color" id="object-color" class="color-input" title="Color">
-            </div>
-
-            <!-- Type Selector -->
-            <div class="prop-row type-row">
-                <div class="type-buttons segmented">
-                    <button id="type-solid" class="type-btn active">Solid</button>
-                    <button id="type-hole" class="type-btn">Hole</button>
+            <div class="prop-row">
+                <input type="text" id="object-name" placeholder="Object Name" class="name-input" style="flex:1;">
+                <div class="color-input-wrapper" title="Color">
+                    <input type="color" id="object-color">
                 </div>
             </div>
 
-            <div class="prop-divider"></div>
-
-            <!-- Transform Grid -->
-            <div class="transform-grid">
-                <!-- Dimensions -->
-                <div class="transform-label">Size</div>
-                <input type="number" id="object-width" step="0.1" placeholder="W" title="Width">
-                <input type="number" id="object-height" step="0.1" placeholder="H" title="Height">
-                <input type="number" id="object-depth" step="0.1" placeholder="D" title="Depth">
-
-                <!-- Position -->
-                <div class="transform-label">Pos</div>
-                <input type="number" id="offset-x" step="0.1" value="0" placeholder="X" title="Position X">
-                <input type="number" id="offset-y" step="0.1" value="0" placeholder="Y" title="Position Y">
-                <input type="number" id="offset-z" step="0.1" value="0" placeholder="Z" title="Position Z">
-
-                <!-- Rotation -->
-                <div class="transform-label">Rot</div>
-                <input type="number" id="rotate-x" step="1" value="0" placeholder="X" title="Rotation X">
-                <input type="number" id="rotate-y" step="1" value="0" placeholder="Y" title="Rotation Y">
-                <input type="number" id="rotate-z" step="1" value="0" placeholder="Z" title="Rotation Z">
+            <!-- Type Selector -->
+            <div class="segmented-control">
+                <button id="type-solid" class="segment-btn active">Solid</button>
+                <button id="type-hole" class="segment-btn">Hole</button>
             </div>
 
-            <div class="prop-divider"></div>
+            <div class="separator-horizontal"></div>
+
+            <!-- Transforms -->
+            <div class="transform-grid">
+                <span class="prop-label">Size</span>
+                <input type="number" id="object-width" step="0.1" title="Width">
+                <input type="number" id="object-height" step="0.1" title="Height">
+                <input type="number" id="object-depth" step="0.1" title="Depth">
+
+                <span class="prop-label">Pos</span>
+                <input type="number" id="offset-x" step="0.1" value="0" title="Position X">
+                <input type="number" id="offset-y" step="0.1" value="0" title="Position Y">
+                <input type="number" id="offset-z" step="0.1" value="0" title="Position Z">
+
+                <span class="prop-label">Rot</span>
+                <input type="number" id="rotate-x" step="1" value="0" title="Rotation X">
+                <input type="number" id="rotate-y" step="1" value="0" title="Rotation Y">
+                <input type="number" id="rotate-z" step="1" value="0" title="Rotation Z">
+            </div>
+
+            <div class="separator-horizontal"></div>
 
             <!-- Actions -->
-            <div class="prop-row actions-row">
-                <button id="uncombine-object" style="display: none;" class="action-btn secondary">Uncombine</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="uncombine-object" style="display: none;" class="action-btn">Uncombine</button>
                 <button id="delete-object" class="action-btn danger">Delete</button>
             </div>
         </div>
-    </div>
 
-    <div id="settings-bar">
-        <div class="setting-group">
-            <label>Snap Grid:</label>
-            <input type="number" id="snap-setting" value="1.0" step="0.1" min="0"> mm
-        </div>
-        <div class="separator"></div>
-        <div class="setting-group">
-            <label>Grid Size:</label>
-            <input type="number" id="grid-size" value="200" step="10"> mm
+        <!-- Grid Settings Footer -->
+        <div style="padding: 12px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.1);">
+            <div style="display: flex; gap: 12px; font-size: 11px; color: var(--text-muted); align-items: center;">
+                <span>GRID</span>
+                <input type="number" id="grid-size" value="200" step="10" style="width: 50px; padding: 2px 4px;">
+                <span>SNAP</span>
+                <input type="number" id="snap-setting" value="1.0" step="0.1" style="width: 40px; padding: 2px 4px;">
+            </div>
         </div>
     </div>
 

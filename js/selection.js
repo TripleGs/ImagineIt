@@ -24,8 +24,9 @@ export function selectAll() {
 
     });
 
-    // Deactivate transform tool if multiple
-    if (state.selectedObjects.length === 1) {
+    // Actiave transform tool if any objects selected
+    if (state.selectedObjects.length > 0) {
+        // If single object, set it as primary (though our new logic should handle groups generically)
         state.selectedObject = state.selectedObjects[0];
         transformTool.activate();
     } else {
@@ -53,6 +54,33 @@ function onPointerDown(event) {
 
     const isMultiSelect = event.ctrlKey || event.metaKey;
 
+    const rect = renderer.domElement.getBoundingClientRect();
+    state.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    state.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    state.raycaster.setFromCamera(state.mouse, camera);
+    const intersects = state.raycaster.intersectObjects(state.objects, false);
+
+    // If we clicked an object
+    if (intersects.length > 0) {
+        const object = intersects[0].object;
+
+        if (isMultiSelect) {
+            // Toggle selection
+            toggleObjectSelection(object);
+        } else {
+            // Standard click
+            if (!state.selectedObjects.includes(object)) {
+                selectObject(object);
+            }
+        }
+
+        // Start dragging if we have a selection
+        startDrag(intersects[0].point);
+        return;
+    }
+
+    // Checking for box select start (Object not hit)
     if (isMultiSelect) {
         // Box Selection Mode Start
         state.isBoxSelecting = true;
@@ -70,22 +98,8 @@ function onPointerDown(event) {
         return;
     }
 
-    const rect = renderer.domElement.getBoundingClientRect();
-    state.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    state.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    state.raycaster.setFromCamera(state.mouse, camera);
-    const intersects = state.raycaster.intersectObjects(state.objects, false);
-
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-        if (!state.selectedObjects.includes(object)) {
-            selectObject(object);
-        }
-        startDrag(intersects[0].point);
-    } else {
-        selectObject(null);
-    }
+    // Clicked on nothing, clear selection
+    selectObject(null);
 }
 
 function onPointerMove(event) {
@@ -139,7 +153,7 @@ function onPointerMove(event) {
         notifyDragUpdate();
 
         // Update transform handles if active
-        if (state.selectedObjects.length === 1) {
+        if (state.selectedObjects.length > 0) {
             transformTool.updateHandles();
         }
     }
@@ -193,7 +207,7 @@ function onPointerUp(event) {
         });
 
         // Update UI
-        if (state.selectedObjects.length === 1) {
+        if (state.selectedObjects.length > 0) {
             transformTool.activate();
         } else {
             transformTool.deactivate();
@@ -355,11 +369,11 @@ function toggleObjectSelection(object) {
     }
 
     // Update Transform Tool state
-    if (state.selectedObjects.length === 1) {
+    if (state.selectedObjects.length > 0) {
         transformTool.activate();
+        transformTool.updateHandles();
     } else {
         transformTool.deactivate();
-        // If > 1, maybe show align tool or different handles later
     }
 
     // Update primary selection
@@ -387,9 +401,10 @@ export function selectObject(object) {
         state.dragStartPosition.copy(object.position);
         state.currentOffset.set(0, 0, 0);
 
-        // Activate Transform Tool for single selection
-        if (state.selectedObjects.length === 1) {
+        // Activate Transform Tool
+        if (state.selectedObjects.length > 0) {
             transformTool.activate();
+            transformTool.updateHandles();
         }
     } else {
         transformTool.deactivate();

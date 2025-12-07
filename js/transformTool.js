@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { scene, camera, renderer, updateGrid } from './scene.js';
 import { state } from './state.js';
 import { saveState } from './history.js';
-import { updatePropertiesPanel } from './ui.js';
+
 
 export class TransformTool {
     constructor() {
@@ -21,6 +21,9 @@ export class TransformTool {
         this.group = new THREE.Group();
         this.groupAdded = false;
 
+        // Track the current sign of the drag (1 or -1) for mirroring
+        this.dragScaleSigns = new THREE.Vector3(1, 1, 1);
+
         // Bind methods
         this.onPointerMove = this.onPointerMove.bind(this);
         this.onPointerDown = this.onPointerDown.bind(this);
@@ -31,9 +34,13 @@ export class TransformTool {
         if (this.isActive) return;
 
         // Add group to scene if not already added
-        if (!this.groupAdded && scene) {
-            scene.add(this.group);
-            this.groupAdded = true;
+        if (!this.groupAdded) {
+            if (scene) {
+                scene.add(this.group);
+                this.groupAdded = true;
+            } else {
+                console.error("TransformTool: Scene not found during activation");
+            }
         }
 
         this.isActive = true;
@@ -63,9 +70,15 @@ export class TransformTool {
         // If selection changed externally, update handles
         // We can check if handles match current selection
         // For now, rely on explicit calls or check active object
-        if (state.selectedObjects.length === 1 && (!this.lastSelected || this.lastSelected !== state.selectedObjects[0])) {
-            this.updateHandles();
-        } else if (state.selectedObjects.length !== 1) {
+        // If selection changed externally, update handles
+        // We can check if handles match current selection
+        // For now, rely on explicit calls or check active object
+        if (state.selectedObjects.length >= 1) {
+            // We might want to optimize this to not update on every frame if not needed
+            // but previously it was checking strict single object equality
+            // For now, let's just let explicit calls handle major updates, 
+            // and here we just check if we should be active.
+        } else if (state.selectedObjects.length === 0) {
             this.clearHandles();
         }
     }
@@ -130,184 +143,152 @@ export class TransformTool {
     }
 
     updateHandles() {
-        if (state.selectedObjects.length !== 1) {
+        if (state.selectedObjects.length === 0) {
             this.clearHandles();
             return;
         }
 
-        const object = state.selectedObjects[0];
+        // Calculate Group Bounding Box
+        const groupMin = new THREE.Vector3(Infinity, Infinity, Infinity);
+        const groupMax = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
 
-        // Ensure we are watching the active object
-        if (this.lastSelected !== object) {
-            this.clearHandles();
-            this.lastSelected = object;
-        }
-
-        if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
-        const bbox = object.geometry.boundingBox;
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
-        const center = new THREE.Vector3();
-        bbox.getCenter(center);
-
-        const min = bbox.min;
-        const max = bbox.max;
-
-        // --- Adaptive Orientation Logic ---
-        // Find which local axis is pointing "Down" in World Space
-        const axes = [
-            { dir: new THREE.Vector3(0, -1, 0), name: '-y', localVal: min.y, oppositeVal: max.y, u: 'x', v: 'z' },
-            { dir: new THREE.Vector3(0, 1, 0), name: '+y', localVal: max.y, oppositeVal: min.y, u: 'x', v: 'z' },
-            { dir: new THREE.Vector3(-1, 0, 0), name: '-x', localVal: min.x, oppositeVal: max.x, u: 'z', v: 'y' }, // If X is up/down, Z/Y are plane
-            { dir: new THREE.Vector3(1, 0, 0), name: '+x', localVal: max.x, oppositeVal: min.x, u: 'z', v: 'y' },
-            { dir: new THREE.Vector3(0, 0, -1), name: '-z', localVal: min.z, oppositeVal: max.z, u: 'x', v: 'y' },
-            { dir: new THREE.Vector3(0, 0, 1), name: '+z', localVal: max.z, oppositeVal: min.z, u: 'x', v: 'y' }
-        ];
-
-        let bestAxis = axes[0];
-        let maxDot = -Infinity;
-
-        // We want the face that is physically lowest.
-        // A face normal points OUT.
-        // Bottom face normal points DOWN (0, -1, 0).
-        // So we want the local axis whose world direction is closest to (0, -1, 0).
-
-        axes.forEach(axis => {
-            const worldDir = axis.dir.clone().applyQuaternion(object.quaternion).normalize();
-            const dot = worldDir.dot(new THREE.Vector3(0, -1, 0));
-            if (dot > maxDot) {
-                maxDot = dot;
-                bestAxis = axis;
+        state.selectedObjects.forEach(object => {
+            if (object.isMesh && object.geometry && !object.geometry.boundingBox) {
+                object.geometry.computeBoundingBox();
+            }
+            const box = new THREE.Box3().setFromObject(object);
+            if (isFinite(box.min.x)) {
+                groupMin.min(box.min);
+                groupMax.max(box.max);
             }
         });
 
-        // "Base" is at bestAxis.localVal on axis.
-        // "Top" is at bestAxis.oppositeVal.
+        if (!isFinite(groupMin.x)) {
+            // No valid bounds found
+            this.clearHandles();
+            return;
+        }
 
-        // Define handle points on this local plane.
-        // Limits for U and V axes
-        const uMin = min[bestAxis.u];
-        const uMax = max[bestAxis.u];
-        const uMid = (uMin + uMax) / 2;
+        // Store group bounds for drag logic
+        this.groupBounds = { min: groupMin.clone(), max: groupMax.clone() };
 
-        const vMin = min[bestAxis.v];
-        const vMax = max[bestAxis.v];
-        const vMid = (vMin + vMax) / 2;
-
-        const baseLevel = bestAxis.localVal;
-
-        // Helper to construct vector given u,v,base coords
-        const makeVec = (u, v, base) => {
-            const v3 = new THREE.Vector3();
-            v3[bestAxis.u] = u;
-            v3[bestAxis.v] = v;
-            // The main axis component
-            if (bestAxis.name.includes('x')) v3.x = base;
-            if (bestAxis.name.includes('y')) v3.y = base;
-            if (bestAxis.name.includes('z')) v3.z = base;
-            return v3;
-        };
-
-        // Helper to make direction vector (normalized)
-        const makeDir = (u, v, baseDir) => {
-            const v3 = new THREE.Vector3();
-            v3[bestAxis.u] = u;
-            v3[bestAxis.v] = v;
-            // The scaling direction along the main axis should be 0 for base handles usually?
-            // Actually, for "Corner" handles, we scale in 2 dims (U and V).
-            // For "Side" handles, we scale in 1 dim.
-
-            // The 'direction' stored involves how the handle affects scale.
-            // If I pull the Right handle (+X), I scale X.
-            // The logic in handleDrag() uses `dir.x` etc.
-            // So we just need to return the direction vector in local space consistent with the handle.
-
-            // BaseDir is 0 for base ring handles (no height scaling).
-            if (bestAxis.name.includes('x')) v3.x = baseDir;
-            if (bestAxis.name.includes('y')) v3.y = baseDir;
-            if (bestAxis.name.includes('z')) v3.z = baseDir;
-            return v3;
-        };
+        // Generate Handles based on Group Bounds (World Aligned)
+        const size = new THREE.Vector3().subVectors(groupMax, groupMin);
+        const center = new THREE.Vector3().addVectors(groupMin, groupMax).multiplyScalar(0.5);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const handleSize = Math.max(1.5, maxDim * 0.05); // Dynamic scale
 
         const handleDefs = [
-            // CORNERS (4)
-            // U-Min, V-Min
-            { pos: makeVec(uMin, vMin, baseLevel), dir: makeDir(-1, -1, 0) },
-            // U-Max, V-Min
-            { pos: makeVec(uMax, vMin, baseLevel), dir: makeDir(1, -1, 0) },
-            // U-Min, V-Max
-            { pos: makeVec(uMin, vMax, baseLevel), dir: makeDir(-1, 1, 0) },
-            // U-Max, V-Max
-            { pos: makeVec(uMax, vMax, baseLevel), dir: makeDir(1, 1, 0) },
+            // Corners (Bottom)
+            { pos: new THREE.Vector3(groupMin.x, groupMin.y, groupMin.z), dir: new THREE.Vector3(-1, -1, -1), type: 'corner' },
+            { pos: new THREE.Vector3(groupMax.x, groupMin.y, groupMin.z), dir: new THREE.Vector3(1, -1, -1), type: 'corner' },
+            { pos: new THREE.Vector3(groupMin.x, groupMin.y, groupMax.z), dir: new THREE.Vector3(-1, -1, 1), type: 'corner' },
+            { pos: new THREE.Vector3(groupMax.x, groupMin.y, groupMax.z), dir: new THREE.Vector3(1, -1, 1), type: 'corner' },
 
-            // SIDES (4)
-            // U-Mid, V-Min (Front equivalent)
-            { pos: makeVec(uMid, vMin, baseLevel), dir: makeDir(0, -1, 0) },
-            // U-Mid, V-Max (Back)
-            { pos: makeVec(uMid, vMax, baseLevel), dir: makeDir(0, 1, 0) },
-            // U-Min, V-Mid (Left)
-            { pos: makeVec(uMin, vMid, baseLevel), dir: makeDir(-1, 0, 0) },
-            // U-Max, V-Mid (Right)
-            { pos: makeVec(uMax, vMid, baseLevel), dir: makeDir(1, 0, 0) },
+            // Sides (Bottom)
+            { pos: new THREE.Vector3(center.x, groupMin.y, groupMin.z), dir: new THREE.Vector3(0, -1, -1), type: 'side' }, // Front
+            { pos: new THREE.Vector3(center.x, groupMin.y, groupMax.z), dir: new THREE.Vector3(0, -1, 1), type: 'side' }, // Back
+            { pos: new THREE.Vector3(groupMin.x, groupMin.y, center.z), dir: new THREE.Vector3(-1, -1, 0), type: 'side' }, // Left
+            { pos: new THREE.Vector3(groupMax.x, groupMin.y, center.z), dir: new THREE.Vector3(1, -1, 0), type: 'side' }, // Right
 
-            // TOP (1) - Opposite face center
-            { pos: makeVec(uMid, vMid, bestAxis.oppositeVal), dir: makeDir(0, 0, 1) }
-            // Ideally Top handle scales along the main axis. 
-            // Note: makeDir sets '0' for main axis for base handles.
-            // For Top handle, we want it to scale the main axis.
-            // If bestAxis is +Y, direction should be (0,1,0). if -Y, direction should be (0,-1,0)?
-            // Wait, handleDrag logic interprets non-zero component as "scale this axis".
-            // If I pull the +Y handle UP, dy is +ve. dSize is +ve. Size grows. Correct.
-            // If I pull the -Y handle DOWN, dy is -ve. dir.y is -1. dSize is +ve. Size grows. Correct.
-
-            // So, the direction for the Top Handle should match the logical direction of that face.
-            // If Top Face is at max.y, dir is +1 Y.
-            // If Top Face is at min.y (because object is flipped?? No, top is always opposite to bottom).
-            // If Bottom is max.y (Upside Down), then Top is min.y.
-            // Handle at min.y should have direction -1 Y.
+            // Top (Center Top)
+            { pos: new THREE.Vector3(center.x, groupMax.y, center.z), dir: new THREE.Vector3(0, 1, 0), type: 'top' }
         ];
 
-        // Correct the TOP handle direction logic:
-        const topHandle = handleDefs[8];
-        const isMaxFace = (bestAxis.oppositeVal === max[bestAxis.name.charAt(1)]); // e.g. max.y
-        // If opposite is Max, direction is +1. If Min, -1.
-        if (bestAxis.name.includes('x')) topHandle.dir.x = isMaxFace ? 1 : -1;
-        if (bestAxis.name.includes('y')) topHandle.dir.y = isMaxFace ? 1 : -1;
-        if (bestAxis.name.includes('z')) topHandle.dir.z = isMaxFace ? 1 : -1;
-
-
-        // Ensure we have enough handles
+        // Ensure handles exist
         while (this.handles.length < handleDefs.length) {
             this.createNewHandle();
         }
 
-        // Hide extra handles (instead of removing them)
+        // Update handle positions and scale
+        handleDefs.forEach((def, index) => {
+            const handle = this.handles[index];
+            handle.visible = true;
+
+            // Adjust position based on dragScaleSigns (Mirroring)
+            // If scale sign is negative, the "min" side becomes "max" side visually and vice versa.
+            // Determine which side (min or max) this handle belongs to originally.
+            // def.dir components are -1 (min), 1 (max), or 0 (center).
+
+            const currentPos = def.pos.clone();
+            const signs = this.dragScaleSigns || new THREE.Vector3(1, 1, 1);
+
+            // Re-calculate handle position dynamically based on bounds? 
+            // The bounds passed in 'groupMin'/'groupMax' are re-calculated every frame in updateHandles.
+            // If object is negatively scaled, computeBoundingBox might return "correct" min/max (swapped internally or just numerical min/max).
+            // THREE.Box3.setFromObject handles negative scale by fixing min/max.
+            // So groupMin is always the numerical minimum.
+            // BUT, if we mirrored, the "Right" handle (originally +1) should now be at the "Left" (numerical min) position?
+            // Let's trace:
+            // Original Right Handle (dir +1). Object scale +1. Handle at Max.
+            // Scale becomes -1. Object flips. 
+            // Visual Right side of the object is now at Min X.
+            // Visual Left side of the object is now at Max X.
+            // We want the handle to follow the "visual" side it was attached to.
+            // Logic:
+            // If original dir is +1 and scale is -1 -> We want the side that looks like the "new right"?
+            // Wait, if I drag the Right handle to the Left past the anchor:
+            // The anchor is Left. The object flips.
+            // I am now dragging the "visual right" edge which is moving further Left.
+            // So the handle should be at the new "visual right" (which is numerically Min).
+            // So:
+            // if (dir * sign > 0) -> Max
+            // if (dir * sign < 0) -> Min
+            // if (dir == 0) -> Center
+
+            if (def.type !== 'top') {
+                // X Axis
+                if (def.dir.x !== 0) {
+                    currentPos.x = (def.dir.x * signs.x > 0) ? groupMax.x : groupMin.x;
+                } else {
+                    currentPos.x = center.x;
+                }
+
+                // Y Axis (for corner/side handles which are at the 'base' usually, or 'top')
+                // original handles are at Min Y (base).
+                // if dir.y is -1 (base). if scaleY is -1, base is now top?
+                if (def.dir.y !== 0) {
+                    currentPos.y = (def.dir.y * signs.y > 0) ? groupMax.y : groupMin.y;
+                } else {
+                    currentPos.y = center.y;
+                }
+
+                // Z Axis
+                if (def.dir.z !== 0) {
+                    currentPos.z = (def.dir.z * signs.z > 0) ? groupMax.z : groupMin.z;
+                } else {
+                    currentPos.z = center.z;
+                }
+            } else {
+                // Top Handle special case: dir is (0, 1, 0)
+                currentPos.x = center.x;
+                currentPos.z = center.z;
+                if (def.dir.y !== 0) {
+                    currentPos.y = (def.dir.y * signs.y > 0) ? groupMax.y : groupMin.y;
+                }
+            }
+
+            handle.position.copy(currentPos);
+            handle.scale.set(handleSize, handleSize, handleSize);
+
+            // Adjust handle visual for top vs corner vs side? 
+            // Reuse logic: Corner (3-axis or 2-axis at base) vs Side (1-axis at base) vs Top
+            handle.userData.direction = def.dir;
+            handle.userData.type = def.type;
+
+            const nonZero = Math.abs(def.dir.x) + Math.abs(def.dir.y) + Math.abs(def.dir.z);
+            handle.material.color.set(def.type === 'corner' ? 0xffffff : 0x333333);
+            if (def.type === 'top') handle.material.color.set(0xffffff);
+        });
+
+        // Hide extra handles
         for (let i = handleDefs.length; i < this.handles.length; i++) {
             this.handles[i].visible = false;
         }
-
-        // Update positions
-        handleDefs.forEach((def, index) => {
-            const handle = this.handles[index];
-            handle.visible = true; // Make sure it's visible
-
-            // Calculate World Position
-            const worldPos = def.pos.clone().applyMatrix4(object.matrixWorld);
-            handle.position.copy(worldPos);
-
-            // Update Data
-            handle.userData.direction = def.dir;
-
-            // Update Color
-            // Top handle (index 8) is usually distinct? Or just by nonZero components.
-            // Corner vs Side logic:
-            const nonZero = Math.abs(def.dir.x) + Math.abs(def.dir.y) + Math.abs(def.dir.z);
-            handle.material.color.set(nonZero > 1 ? 0xffffff : 0x333333);
-        });
     }
 
     createNewHandle() {
-        const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             side: THREE.DoubleSide,
@@ -326,10 +307,6 @@ export class TransformTool {
         this.group.add(handle);
         this.handles.push(handle);
         return handle;
-    }
-
-    createHandleLocal(localPosition, direction) {
-        // Deprecated by updateHandles logic
     }
 
     onPointerMove(event) {
@@ -352,21 +329,31 @@ export class TransformTool {
 
         if (intersects.length > 0) {
             const handle = intersects[0].object;
-            if (this.hoveredHandle !== handle) {
-                this.hoveredHandle = handle;
-                handle.material.color.set(0xff0000); // Highlight
-                document.body.style.cursor = 'pointer';
+            // Only highlight if visible
+            if (handle.visible) {
+                if (this.hoveredHandle !== handle) {
+                    this.hoveredHandle = handle;
+                    handle.material.color.set(0xff0000); // Highlight
+                    document.body.style.cursor = 'pointer';
+                }
             }
         } else {
             if (this.hoveredHandle) {
                 // Reset color
                 const dir = this.hoveredHandle.userData.direction;
                 const nonZero = Math.abs(dir.x) + Math.abs(dir.y) + Math.abs(dir.z);
-                this.hoveredHandle.material.color.set(nonZero === 1 ? 0x333333 : 0xffffff);
+                this.hoveredHandle.material.color.set(nonZero > 1 ? 0xffffff : 0x333333);
 
                 this.hoveredHandle = null;
                 document.body.style.cursor = 'default';
             }
+        }
+    }
+
+    onPointerUp(event) {
+        if (this.activeHandle) {
+            this.activeHandle = null;
+            state.isDragging = false;
         }
     }
 
@@ -378,52 +365,48 @@ export class TransformTool {
         this.activeHandle = this.hoveredHandle;
         state.isDragging = true; // Block orbit controls
 
-        const object = state.selectedObjects[0];
+        // Reset scale signs on new drag
+        this.dragScaleSigns.set(1, 1, 1);
 
-        // Store initial state
         saveState();
-        this.initialObjectScale.copy(object.scale);
-        this.initialObjectPosition.copy(object.position);
 
-        // Find intersection point on a plane
+        // Capture initial state for ALL selected objects
+        this.initialObjectStates = state.selectedObjects.map(obj => ({
+            object: obj,
+            position: obj.position.clone(),
+            scale: obj.scale.clone(),
+            quaternion: obj.quaternion.clone(),
+            // Store World Box for group calculations relative to this object?
+            // Actually we are manipulating the GROUP box.
+        }));
+
+        this.initialGroupBounds = {
+            min: this.groupBounds.min.clone(),
+            max: this.groupBounds.max.clone(),
+            size: new THREE.Vector3().subVectors(this.groupBounds.max, this.groupBounds.min)
+        };
+
         this.raycaster.setFromCamera(this.mouse, camera);
 
-        // Define a drag plane.
-        // If Y scaling, plane is vertical or facing camera?
-        // If X/Z scaling, plane is horizontal (ground) usually.
+        // Define Drag Plane
         const dir = this.activeHandle.userData.direction;
+        const type = this.activeHandle.userData.type;
 
-        if (Math.abs(dir.y) > 0.5) {
-            // Vertical Drag - Plane passing through handle, facing camera?
-            // Simple: Vertical plane aligned with camera view direction
-            const normal = new THREE.Vector3();
-            camera.getWorldDirection(normal);
-            normal.y = 0;
-            normal.normalize();
-            // Or just a plane perpendicular to camera?
-            // Let's use a plane at the handle's position with normal pointing to X or Z?
-            // Actually for Y scaling, we likely just want a vertical plane. 
-            // Let's try camera-facing vertical plane.
+        if (type === 'top') {
+            // Vertical Drag
             this.dragPlane = new THREE.Plane();
             this.dragPlane.setFromNormalAndCoplanarPoint(
-                camera.position.clone().sub(this.activeHandle.position).setY(0).normalize(), // pseudo-billboard
+                camera.position.clone().sub(this.activeHandle.position).setY(0).normalize(),
                 this.activeHandle.position
             );
         } else {
-            // Horizontal Drag - Ground plane
-            this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this.activeHandle.position.y);
+            // Horizontal Drag on object base plane (groupMin.y)
+            this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this.initialGroupBounds.min.y);
         }
 
         const intersection = new THREE.Vector3();
         this.raycaster.ray.intersectPlane(this.dragPlane, intersection);
         this.initialDragPoint = intersection;
-    }
-
-    onPointerUp(event) {
-        if (this.activeHandle) {
-            this.activeHandle = null;
-            state.isDragging = false;
-        }
     }
 
     handleDrag() {
@@ -434,96 +417,106 @@ export class TransformTool {
 
         if (!this.raycaster.ray.intersectPlane(this.dragPlane, currentPoint)) return;
 
-        // Calculate Delta in world space
+        // Calculate Delta
         const delta = currentPoint.clone().sub(this.initialDragPoint);
-
-        // Snap delta?
         if (state.snapValue > 0) {
             delta.x = Math.round(delta.x / state.snapValue) * state.snapValue;
             delta.y = Math.round(delta.y / state.snapValue) * state.snapValue;
             delta.z = Math.round(delta.z / state.snapValue) * state.snapValue;
         }
 
-        const object = state.selectedObjects[0];
-        const dir = this.activeHandle.userData.direction; // Local direction relative to box center (-1, 0, -1 etc)
+        const dir = this.activeHandle.userData.direction;
+        const initialSize = this.initialGroupBounds.size;
 
-        // We need to apply scaling.
-        // If direction is (1, 0, 0) -> Scale X.
-        // Delta needs to be projected onto the object's local axes.
+        // Calculate Scale Factor based on drag
+        // NewSize = OldSize + Delta * Dir (roughly)
+        // If dragging Right (+1), dx adds to width.
+        // If dragging Left (-1), dx subtracts from width? No, -dx adds to width?
+        // Delta is world movement.
+        // If direction is -1 (Left), and we move Left (-5), delta is -5. 
+        // We want size to INCREASE by 5.
+        // So change in size = delta * direction? (-5 * -1 = +5). Yes.
 
-        // Get object's local X, Y, Z axes in world space
-        const axisX = new THREE.Vector3(1, 0, 0).applyQuaternion(object.quaternion);
-        const axisY = new THREE.Vector3(0, 1, 0).applyQuaternion(object.quaternion);
-        const axisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(object.quaternion);
+        const dSize = new THREE.Vector3(
+            delta.x * (dir.x !== 0 ? Math.sign(dir.x) : 0),
+            delta.y * (dir.y !== 0 ? Math.sign(dir.y) : 0), // Top handle is +1 Y
+            delta.z * (dir.z !== 0 ? Math.sign(dir.z) : 0)
+        );
 
-        // Project delta onto axes
-        const dx = delta.dot(axisX);
-        const dy = delta.dot(axisY);
-        const dz = delta.dot(axisZ);
+        // Only scale relevant axes
+        // Allow negative scaling for mirroring
+        let scaleX = dir.x !== 0 ? (initialSize.x + dSize.x) / initialSize.x : 1;
+        let scaleY = dir.y !== 0 ? (initialSize.y + dSize.y) / initialSize.y : 1;
+        let scaleZ = dir.z !== 0 ? (initialSize.z + dSize.z) / initialSize.z : 1;
 
-        // Resize logic:
-        // If direction.x is 1 (Positive X face), dragging +dx increases size.
-        // If direction.x is -1 (Negative X face), dragging -dx increases size?
+        // Update drag signs and prevent exact zero scale to avoid singularities
+        const epsilon = 0.001;
+        if (Math.abs(scaleX) < epsilon) scaleX = epsilon * Math.sign(scaleX || 1);
+        if (Math.abs(scaleY) < epsilon) scaleY = epsilon * Math.sign(scaleY || 1);
+        if (Math.abs(scaleZ) < epsilon) scaleZ = epsilon * Math.sign(scaleZ || 1);
 
-        // We also need to move the position so the OPPOSITE face stays valid.
-        // Current scale
-        const currentScale = this.initialObjectScale.clone();
+        this.dragScaleSigns.set(
+            Math.sign(scaleX),
+            Math.sign(scaleY),
+            Math.sign(scaleZ)
+        );
 
-        // Original size in local units?
-        // Assuming geometry is normalized to roughly 1 or dimensions known?
-        // Objects.js primitives have dimensions passed to constructor, 
-        // but mesh.scale might be 1. 
-        // We generally modify .scale.
+        // Apply to all objects
+        // We need an "Anchor Point" for the scale.
+        // If dragging Right, Anchor is Left.
+        // Anchor = Center - (Size/2 * Direction).
+        // Actually simpler:
+        // center = min + size/2.
+        // If dir is +1, anchor is min.
+        // If dir is -1, anchor is max.
+        // If dir is 0, anchor is center (for that axis)?
 
-        // We need the unscaled size to know how much scale factor changes.
-        // Bounding box size (world) = local_bbox_size * scale.
+        const anchor = new THREE.Vector3(
+            // Use original direction to determine anchor.
+            // If dragging Right (+1), Anchor is Left (min).
+            // If dragging Left (-1), Anchor is Right (max).
+            // This logic stays the same regardless of current scale sign?
+            // Yes, because "Left" and "Right" sides of the original box haven't moved, 
+            // we are projecting FROM the anchor.
+            dir.x >= 0 ? this.initialGroupBounds.min.x : this.initialGroupBounds.max.x,
+            dir.y >= 0 ? this.initialGroupBounds.min.y : this.initialGroupBounds.max.y,
+            dir.z >= 0 ? this.initialGroupBounds.min.z : this.initialGroupBounds.max.z
+        );
 
-        const bbox = object.geometry.boundingBox;
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
+        // However, if dir is 0 for an axis (e.g. Side handle), we scale outward from center?
+        // No, side handle (1, 0, 0) scales X. Y and Z are untouched (scale=1).
+        // So Anchor Y/Z don't matter much if scale is 1.
 
-        // Allow scaling
-        const newScale = currentScale.clone();
-        const startPos = this.initialObjectPosition.clone();
-        const posOffset = new THREE.Vector3();
+        this.initialObjectStates.forEach(state => {
+            const obj = state.object;
+            const initialPos = state.position;
+            const initialScale = state.scale;
 
-        if (dir.x !== 0) {
-            // Change in width
-            const dSize = dx * dir.x; // If pulling right (+1) and moving right (+dx) -> grow
-            const newSize = (size.x * currentScale.x) + dSize;
-            if (newSize > 0.1) {
-                newScale.x = newSize / size.x;
-                // Move center: Shift by dSize/2 in direction of drag
-                posOffset.add(axisX.clone().multiplyScalar(dx / 2));
-            }
-        }
+            // 1. Update Scale
+            // Simply multiply? 
+            // obj.scale.x = initialScale.x * scaleX
+            obj.scale.set(
+                initialScale.x * scaleX,
+                initialScale.y * scaleY,
+                initialScale.z * scaleZ
+            );
 
-        if (dir.y !== 0) {
-            const dSize = dy * dir.y;
-            const newSize = (size.y * currentScale.y) + dSize;
-            if (newSize > 0.1) {
-                newScale.y = newSize / size.y;
-                posOffset.add(axisY.clone().multiplyScalar(dy / 2));
-            }
-        }
+            // 2. Update Position
+            // P_new = Anchor + (P_old - Anchor) * ScaleFactor
+            const vecFromAnchor = initialPos.clone().sub(anchor);
+            vecFromAnchor.x *= scaleX;
+            vecFromAnchor.y *= scaleY;
+            vecFromAnchor.z *= scaleZ;
 
-        if (dir.z !== 0) {
-            const dSize = dz * dir.z;
-            const newSize = (size.z * currentScale.z) + dSize;
-            if (newSize > 0.1) {
-                newScale.z = newSize / size.z;
-                posOffset.add(axisZ.clone().multiplyScalar(dz / 2));
-            }
-        }
+            obj.position.copy(anchor).add(vecFromAnchor);
+        });
 
-        object.scale.copy(newScale);
-        object.position.copy(startPos).add(posOffset);
+        // Dispatch event for UI updates
+        window.dispatchEvent(new CustomEvent('transformUpdated', { detail: state.selectedObjects }));
 
-        updatePropertiesPanel([object]);
-
-        // Update handles
         this.updateHandles();
     }
 }
 
 export const transformTool = new TransformTool();
+

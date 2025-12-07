@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ICONS } from './icons.js';
 import { state } from './state.js';
 import { createMesh } from './objects.js';
 import { exportSTL, exportImagine, importFile, normalizeGeometry } from './fileHandler.js';
@@ -10,9 +11,12 @@ import { shapeManager } from './shapeManager.js';
 import { faceSnapTool } from './faceSnapTool.js';
 
 function updateOffsetDisplay(offset) {
-    document.getElementById('offset-x').value = offset.x.toFixed(2);
-    document.getElementById('offset-y').value = offset.y.toFixed(2);
-    document.getElementById('offset-z').value = offset.z.toFixed(2);
+    const el = document.getElementById('offset-x');
+    if (el) el.value = offset.x.toFixed(2);
+    const elY = document.getElementById('offset-y');
+    if (elY) elY.value = offset.y.toFixed(2);
+    const elZ = document.getElementById('offset-z');
+    if (elZ) elZ.value = offset.z.toFixed(2);
 }
 
 
@@ -34,7 +38,14 @@ export function initUI() {
     const shapeGrid = document.getElementById('shape-grid');
     const shapes = shapeManager.getShapes();
 
-    // Populate grid
+    // Listen for transform updates from TransformTool (handles circular dependency)
+    window.addEventListener('transformUpdated', (e) => {
+        if (e.detail) {
+            updatePropertiesPanel(e.detail);
+        }
+    });
+
+    // Populate shape grid
     for (const shape of shapes) {
         const card = document.createElement('div');
         card.className = 'shape-card';
@@ -44,7 +55,8 @@ export function initUI() {
         previewContainer.className = 'shape-preview';
 
         // Add loading placeholder or icon initially
-        previewContainer.innerHTML = `<span style="font-size: 24px;">${shape.icon}</span>`;
+        const iconKey = shape.iconKey || 'cube'; // Fallback to cube if undefined
+        previewContainer.innerHTML = ICONS[iconKey] || ICONS['cube'];
 
         const nameLabel = document.createElement('div');
         nameLabel.className = 'shape-name';
@@ -70,7 +82,7 @@ export function initUI() {
                 // Random position for now, or fixed offset
                 const position = new THREE.Vector3(
                     (Math.random() - 0.5) * 50,
-                    10,
+                    0,
                     (Math.random() - 0.5) * 50
                 );
 
@@ -533,6 +545,9 @@ function updateTypeButtons(isSolid) {
 }
 
 export function updatePropertiesPanel(objects) {
+    const panel = document.getElementById('properties-panel');
+    panel.style.display = 'flex'; // Show entire panel
+
     document.getElementById('no-selection').style.display = 'none';
     document.getElementById('object-properties').style.display = 'flex';
 
@@ -642,6 +657,9 @@ export function updatePropertiesPanel(objects) {
 }
 
 export function hidePropertiesPanel() {
+    const panel = document.getElementById('properties-panel');
+    panel.style.display = 'none'; // Hide entire panel
+
     document.getElementById('no-selection').style.display = 'block';
     document.getElementById('object-properties').style.display = 'none';
 

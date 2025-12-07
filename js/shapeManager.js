@@ -10,21 +10,21 @@ class ShapeManager {
                 name: 'Box',
                 type: 'primitive',
                 create: () => new THREE.BoxGeometry(20, 20, 20),
-                icon: '📦'
+                iconKey: 'cube'
             },
             {
                 id: 'cylinder',
                 name: 'Cylinder',
                 type: 'primitive',
                 create: () => new THREE.CylinderGeometry(10, 10, 20, 32),
-                icon: '🛢️'
+                iconKey: 'cylinder'
             },
             {
                 id: 'sphere',
                 name: 'Sphere',
                 type: 'primitive',
                 create: () => new THREE.SphereGeometry(10, 32, 32),
-                icon: '🔵'
+                iconKey: 'sphere'
             },
             {
                 id: 'tetrahedron',
@@ -43,7 +43,7 @@ class ShapeManager {
                     geo.applyMatrix4(matrix);
                     return geo;
                 },
-                icon: '🔺'
+                iconKey: 'cone' // Tetrahedron looks like a tripod/cone roughly
             },
             {
                 id: 'octahedron',
@@ -62,7 +62,7 @@ class ShapeManager {
                     geo.applyMatrix4(matrix);
                     return geo;
                 },
-                icon: '🔷'
+                iconKey: 'diamond' // No d8 yet, maybe diamond or just fallback
             },
             {
                 id: 'pentagonal_trapezohedron',
@@ -81,7 +81,7 @@ class ShapeManager {
                     geo.applyMatrix4(matrix);
                     return geo;
                 },
-                icon: '🔟'
+                iconKey: 'd10'
             },
             {
                 id: 'dodecahedron',
@@ -100,7 +100,7 @@ class ShapeManager {
                     geo.applyMatrix4(matrix);
                     return geo;
                 },
-                icon: '⬟'
+                iconKey: 'd12'
             },
             {
                 id: 'icosahedron',
@@ -119,7 +119,7 @@ class ShapeManager {
                     geo.applyMatrix4(matrix);
                     return geo;
                 },
-                icon: '🎲'
+                iconKey: 'd20'
             }
         ];
         this.loader = new STLLoader();
