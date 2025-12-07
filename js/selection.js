@@ -251,6 +251,8 @@ function toggleObjectSelection(object) {
 }
 
 function addWireframeHelper(object) {
+    // Disabled for performance with complex STLs
+    /*
     if (object.userData.helper) return;
 
     const wireframeGeo = new THREE.WireframeGeometry(object.geometry);
@@ -262,6 +264,7 @@ function addWireframeHelper(object) {
 
     object.add(wireframe);
     object.userData.helper = wireframe;
+    */
 }
 
 export function selectObject(object) {
