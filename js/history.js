@@ -49,18 +49,30 @@ export function redo() {
 }
 
 function serializeObject(obj) {
-    return {
-        geometry: {
+    // Check if geometry is already cached
+    if (!obj.geometry.userData.uuid) {
+        obj.geometry.userData.uuid = THREE.MathUtils.generateUUID();
+    }
+    const geoUUID = obj.geometry.userData.uuid;
+
+    if (!state.geometryCache.has(geoUUID)) {
+        // Cache the geometry data
+        state.geometryCache.set(geoUUID, {
             type: obj.geometry.type,
             parameters: obj.geometry.parameters,
-            // Store the actual geometry data for combined objects
             positionArray: obj.geometry.attributes.position ?
                 Array.from(obj.geometry.attributes.position.array) : null,
             normalArray: obj.geometry.attributes.normal ?
                 Array.from(obj.geometry.attributes.normal.array) : null,
             indexArray: obj.geometry.index ?
-                Array.from(obj.geometry.index.array) : null
-        },
+                Array.from(obj.geometry.index.array) : null,
+            uvArray: obj.geometry.attributes.uv ?
+                Array.from(obj.geometry.attributes.uv.array) : null
+        });
+    }
+
+    return {
+        geometryUUID: geoUUID,
         material: {
             color: obj.material.color.getHex(),
             transparent: obj.material.transparent,
@@ -78,41 +90,60 @@ function serializeObject(obj) {
 function deserializeObject(data) {
     let geometry;
 
-    // Restore combined object geometry
-    if (data.geometry.positionArray) {
-        geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position',
-            new THREE.Float32BufferAttribute(data.geometry.positionArray, 3));
-        if (data.geometry.normalArray) {
-            geometry.setAttribute('normal',
-                new THREE.Float32BufferAttribute(data.geometry.normalArray, 3));
+    // Retrieve from cache
+    const geoData = state.geometryCache.get(data.geometryUUID);
+
+    if (geoData) {
+        if (geoData.positionArray) {
+            geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(geoData.positionArray, 3));
+            if (geoData.normalArray) geometry.setAttribute('normal', new THREE.Float32BufferAttribute(geoData.normalArray, 3));
+            if (geoData.indexArray) geometry.setIndex(new THREE.Uint32BufferAttribute(geoData.indexArray, 1));
+            if (geoData.uvArray) geometry.setAttribute('uv', new THREE.Float32BufferAttribute(geoData.uvArray, 2));
+        } else {
+            // Primitive reconstruction
+            switch (geoData.type) {
+                case 'BoxGeometry':
+                    const bp = geoData.parameters;
+                    geometry = new THREE.BoxGeometry(bp.width, bp.height, bp.depth);
+                    break;
+                case 'CylinderGeometry':
+                    const cp = geoData.parameters;
+                    geometry = new THREE.CylinderGeometry(cp.radiusTop, cp.radiusBottom, cp.height, cp.radialSegments);
+                    break;
+                case 'SphereGeometry':
+                    const sp = geoData.parameters;
+                    geometry = new THREE.SphereGeometry(sp.radius, sp.widthSegments, sp.heightSegments);
+                    break;
+                case 'TetrahedronGeometry':
+                    const tp = geoData.parameters;
+                    geometry = new THREE.TetrahedronGeometry(tp.radius, tp.detail);
+                    break;
+                case 'DodecahedronGeometry':
+                    const dp = geoData.parameters;
+                    geometry = new THREE.DodecahedronGeometry(dp.radius, dp.detail);
+                    break;
+                case 'IcosahedronGeometry':
+                    const ip = geoData.parameters;
+                    geometry = new THREE.IcosahedronGeometry(ip.radius, ip.detail);
+                    break;
+                case 'OctahedronGeometry':
+                    const op = geoData.parameters;
+                    geometry = new THREE.OctahedronGeometry(op.radius, op.detail);
+                    break;
+                default:
+                    // Try to reconstruct from shape manager if params missing or complex
+                    // For now fallback to box if totally lost
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+            }
         }
-        if (data.geometry.indexArray) {
-            geometry.setIndex(new THREE.Uint32BufferAttribute(data.geometry.indexArray, 1));
-        }
+
+        // Restore UUID to keep cache linkage
+        geometry.userData.uuid = data.geometryUUID;
+
     } else {
-        // Restore primitive geometry
-        switch (data.geometry.type) {
-            case 'BoxGeometry':
-                const bp = data.geometry.parameters;
-                geometry = new THREE.BoxGeometry(bp.width, bp.height, bp.depth);
-                break;
-            case 'CylinderGeometry':
-                const cp = data.geometry.parameters;
-                geometry = new THREE.CylinderGeometry(
-                    cp.radiusTop, cp.radiusBottom, cp.height, cp.radialSegments
-                );
-                break;
-            case 'SphereGeometry':
-                const sp = data.geometry.parameters;
-                geometry = new THREE.SphereGeometry(
-                    sp.radius, sp.widthSegments, sp.heightSegments
-                );
-                break;
-            default:
-                console.warn('Unknown geometry type:', data.geometry.type);
-                geometry = new THREE.BoxGeometry(1, 1, 1);
-        }
+        console.warn('Geometry missing from cache:', data.geometryUUID);
+        geometry = new THREE.BoxGeometry(5, 5, 5); // Error placeholder
     }
 
     const material = new THREE.MeshStandardMaterial({

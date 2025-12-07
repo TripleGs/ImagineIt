@@ -10,6 +10,7 @@ export const state = {
     dragStartPositions: new Map(),
     currentOffset: new THREE.Vector3(),
     clipboard: [],
+    geometryCache: new Map(),
     isDragging: false,
     dragPlane: new THREE.Plane(),
     dragIntersection: new THREE.Vector3(),

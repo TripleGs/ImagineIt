@@ -30,48 +30,96 @@ class ShapeManager {
                 id: 'tetrahedron',
                 name: 'Tetrahedron',
                 type: 'primitive',
-                create: () => new THREE.TetrahedronGeometry(15),
-                icon: '🔺',
-                initialRotation: [144, 12, -36],
-                yOffset: 5 // Apothem ~5
+                create: () => {
+                    const geo = new THREE.TetrahedronGeometry(15);
+                    const matrix = new THREE.Matrix4().makeRotationFromEuler(
+                        new THREE.Euler(
+                            THREE.MathUtils.degToRad(144),
+                            THREE.MathUtils.degToRad(12),
+                            THREE.MathUtils.degToRad(-36),
+                            'XYZ'
+                        )
+                    );
+                    geo.applyMatrix4(matrix);
+                    return geo;
+                },
+                icon: '🔺'
             },
             {
                 id: 'octahedron',
                 name: 'Octahedron (d8)',
                 type: 'primitive',
-                create: () => new THREE.OctahedronGeometry(15),
-                icon: '🔷',
-                initialRotation: [70, 52, 70],
-                yOffset: 9 // Apothem ~9
+                create: () => {
+                    const geo = new THREE.OctahedronGeometry(15);
+                    const matrix = new THREE.Matrix4().makeRotationFromEuler(
+                        new THREE.Euler(
+                            THREE.MathUtils.degToRad(70),
+                            THREE.MathUtils.degToRad(52),
+                            THREE.MathUtils.degToRad(70),
+                            'XYZ'
+                        )
+                    );
+                    geo.applyMatrix4(matrix);
+                    return geo;
+                },
+                icon: '🔷'
             },
             {
                 id: 'pentagonal_trapezohedron',
                 name: 'Pentagonal Trapezohedron (d10)',
                 type: 'primitive',
-                // Width ~26 (Radius 13), Height ~25 (HalfHeight 12.5) for "26, 25, 24" sizing
-                create: () => createPentagonalTrapezohedron(13, 12.5),
-                icon: '🔟',
-                // User requested rotation to show 44, -52, -102 in properties
-                initialRotation: [44, -52, -102],
-                yOffset: 8.57
+                create: () => {
+                    const geo = createPentagonalTrapezohedron(13, 12.5);
+                    const matrix = new THREE.Matrix4().makeRotationFromEuler(
+                        new THREE.Euler(
+                            THREE.MathUtils.degToRad(44),
+                            THREE.MathUtils.degToRad(-52),
+                            THREE.MathUtils.degToRad(-102),
+                            'XYZ'
+                        )
+                    );
+                    geo.applyMatrix4(matrix);
+                    return geo;
+                },
+                icon: '🔟'
             },
             {
                 id: 'dodecahedron',
                 name: 'Dodecahedron (d12)',
                 type: 'primitive',
-                create: () => new THREE.DodecahedronGeometry(15),
-                icon: '⬟',
-                initialRotation: [72, 27, 36],
-                yOffset: 12 // Apothem ~12
+                create: () => {
+                    const geo = new THREE.DodecahedronGeometry(15);
+                    const matrix = new THREE.Matrix4().makeRotationFromEuler(
+                        new THREE.Euler(
+                            THREE.MathUtils.degToRad(72),
+                            THREE.MathUtils.degToRad(27),
+                            THREE.MathUtils.degToRad(36),
+                            'XYZ'
+                        )
+                    );
+                    geo.applyMatrix4(matrix);
+                    return geo;
+                },
+                icon: '⬟'
             },
             {
                 id: 'icosahedron',
                 name: 'Icosahedron (d20)',
                 type: 'primitive',
-                create: () => new THREE.IcosahedronGeometry(15),
-                icon: '🎲',
-                initialRotation: [0, 0, 111],
-                yOffset: 12 // Apothem ~12
+                create: () => {
+                    const geo = new THREE.IcosahedronGeometry(15);
+                    const matrix = new THREE.Matrix4().makeRotationFromEuler(
+                        new THREE.Euler(
+                            0,
+                            0,
+                            THREE.MathUtils.degToRad(111),
+                            'XYZ'
+                        )
+                    );
+                    geo.applyMatrix4(matrix);
+                    return geo;
+                },
+                icon: '🎲'
             }
         ];
         this.loader = new STLLoader();

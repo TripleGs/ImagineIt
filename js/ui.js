@@ -196,6 +196,24 @@ export function initUI() {
     window.addEventListener('keydown', (event) => {
         const isCtrl = event.ctrlKey || event.metaKey;
 
+        // Select All (Ctrl+A / Cmd+A)
+        if (isCtrl && (event.key === 'a' || event.key === 'A')) {
+            event.preventDefault();
+            // Prevent if input is focused
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            // Select all objects
+            // We need a way to select multiple. `selection.js` has `selectObject` which clears.
+            // We need to modify selection.js to handle mass selection or iterate.
+            // Let's implement a `selectAll()` function in `js/selection.js` and export it?
+            // Or just manually update state and notify.
+            // Best practice: Use selection module.
+            import('./selection.js').then(module => {
+                module.selectAll();
+            });
+            return;
+        }
+
         // Ctrl+Z or Cmd+Z for undo
         if (isCtrl && event.key === 'z' && !event.shiftKey) {
             event.preventDefault();

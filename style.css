@@ -513,3 +513,11 @@ canvas {
     font-size: 13px;
     color: #666;
 }
+
+#selection-box {
+    position: absolute;
+    background: rgba(33, 150, 243, 0.2);
+    border: 1px solid rgba(33, 150, 243, 0.6);
+    pointer-events: none;
+    z-index: 1000;
+}

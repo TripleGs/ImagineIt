@@ -12,6 +12,36 @@ export function onSelectionChange(callback) {
     onSelectionChangeCallbacks.push(callback);
 }
 
+// Exported for UI
+export function selectAll() {
+    // Clear existing
+    state.selectedObjects.forEach(obj => {
+        if (obj.userData.helper) {
+            obj.remove(obj.userData.helper);
+            obj.userData.helper = null;
+        }
+    });
+
+    // Select all
+    state.selectedObjects = [...state.objects];
+
+    state.selectedObjects.forEach(obj => {
+        addWireframeHelper(obj);
+    });
+
+    // Deactivate transform tool if multiple
+    if (state.selectedObjects.length === 1) {
+        state.selectedObject = state.selectedObjects[0];
+        transformTool.activate();
+    } else {
+        state.selectedObject = null;
+        transformTool.deactivate();
+    }
+
+    // Notify
+    onSelectionChangeCallbacks.forEach(cb => cb(state.selectedObjects));
+}
+
 export function initSelection(cam, rend) {
     camera = cam;
     renderer = rend;
@@ -21,9 +51,29 @@ export function initSelection(cam, rend) {
     window.addEventListener('pointerup', onPointerUp);
 }
 
+
 function onPointerDown(event) {
     if (state.toolMode !== 'select') return;
     if (event.target !== renderer.domElement) return;
+
+    const isMultiSelect = event.ctrlKey || event.metaKey;
+
+    if (isMultiSelect) {
+        // Box Selection Mode Start
+        state.isBoxSelecting = true;
+        state.boxStartPoint = { x: event.clientX, y: event.clientY };
+
+        // Disable orbit controls to prevent panning
+        if (orbitControls) orbitControls.enabled = false;
+
+        const box = document.getElementById('selection-box');
+        box.style.left = event.clientX + 'px';
+        box.style.top = event.clientY + 'px';
+        box.style.width = '0px';
+        box.style.height = '0px';
+        box.style.display = 'block';
+        return;
+    }
 
     const rect = renderer.domElement.getBoundingClientRect();
     state.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -32,31 +82,35 @@ function onPointerDown(event) {
     state.raycaster.setFromCamera(state.mouse, camera);
     const intersects = state.raycaster.intersectObjects(state.objects);
 
-    const isMultiSelect = event.ctrlKey || event.metaKey;
-
     if (intersects.length > 0) {
         const object = intersects[0].object;
-
-        if (isMultiSelect) {
-            // Multi-select mode
-            toggleObjectSelection(object);
-        } else {
-            // Single select mode
-            if (!state.selectedObjects.includes(object)) {
-                selectObject(object);
-            }
-            // Start dragging all selected objects
-            startDrag(intersects[0].point);
+        if (!state.selectedObjects.includes(object)) {
+            selectObject(object);
         }
+        startDrag(intersects[0].point);
     } else {
-        // Clicked on empty space - deselect all
-        if (!isMultiSelect) {
-            selectObject(null);
-        }
+        selectObject(null);
     }
 }
 
 function onPointerMove(event) {
+    if (state.isBoxSelecting) {
+        const start = state.boxStartPoint;
+        const current = { x: event.clientX, y: event.clientY };
+
+        const minX = Math.min(start.x, current.x);
+        const maxX = Math.max(start.x, current.x);
+        const minY = Math.min(start.y, current.y);
+        const maxY = Math.max(start.y, current.y);
+
+        const box = document.getElementById('selection-box');
+        box.style.left = minX + 'px';
+        box.style.top = minY + 'px';
+        box.style.width = (maxX - minX) + 'px';
+        box.style.height = (maxY - minY) + 'px';
+        return;
+    }
+
     if (!state.isDragging || state.selectedObjects.length === 0) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
@@ -97,6 +151,65 @@ function onPointerMove(event) {
 }
 
 function onPointerUp(event) {
+    if (state.isBoxSelecting) {
+        state.isBoxSelecting = false;
+        document.getElementById('selection-box').style.display = 'none';
+
+        // Use standard Frustum checking? Or simple Screen Space check?
+        // Screen space is enough for "Box Select".
+
+        // Define selection rectangle in screen coords
+        const start = state.boxStartPoint;
+        const end = { x: event.clientX, y: event.clientY };
+        const minX = Math.min(start.x, end.x);
+        const maxX = Math.max(start.x, end.x);
+        const minY = Math.min(start.y, end.y);
+        const maxY = Math.max(start.y, end.y);
+
+        // Avoid selecting if simple click
+        if (maxX - minX < 5 && maxY - minY < 5) return;
+
+        // Check all objects
+        const rect = renderer.domElement.getBoundingClientRect();
+
+        // If explicitly box selecting, do we append or replace?
+        // Usually add to selection if Shift, replace if not?
+        // But we are in "Ctrl" mode.
+        // Let's Add to existing selection for now (Union).
+        // Actually, user said "cntrl cmd select".
+        // Let's default to Union.
+
+        state.objects.forEach(obj => {
+            // Project object position to screen
+            // Use center? Or vertex check? Center is faster.
+            const pos = obj.position.clone();
+            pos.project(camera); // -1 to 1
+
+            // Convert to screen px
+            const x = (pos.x * .5 + .5) * rect.width + rect.left;
+            const y = (pos.y * -.5 + .5) * rect.height + rect.top; // y is inverted in CSS
+
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                if (!state.selectedObjects.includes(obj)) {
+                    state.selectedObjects.push(obj);
+                    addWireframeHelper(obj);
+                }
+            }
+        });
+
+        // Update UI
+        if (state.selectedObjects.length === 1) {
+            transformTool.activate();
+        } else {
+            transformTool.deactivate();
+        }
+        onSelectionChangeCallbacks.forEach(cb => cb(state.selectedObjects));
+
+        // Re-enable orbit controls
+        if (orbitControls) orbitControls.enabled = true;
+        return;
+    }
+
     if (state.isDragging) {
         state.isDragging = false;
         orbitControls.enabled = true;
