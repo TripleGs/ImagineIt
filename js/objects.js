@@ -27,6 +27,17 @@ export function createMesh(geometry, color, position, type = 'object') {
     // Default to solid
     mesh.userData.isSolid = true;
 
+    // Always add edge tracing
+    const edgesGeo = new THREE.EdgesGeometry(geometry, 15);
+    const edges = new THREE.LineSegments(edgesGeo);
+    edges.material.depthTest = true;
+    edges.material.opacity = 1;
+    edges.material.transparent = false;
+    edges.material.color.set(0x000000);
+    edges.matrixAutoUpdate = false; // Optimization: It moves with the parent
+    mesh.add(edges);
+    mesh.userData.helper = edges;
+
     scene.add(mesh);
     state.objects.push(mesh);
     return mesh;

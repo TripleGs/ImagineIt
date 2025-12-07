@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { state } from './state.js';
 import { createMesh } from './objects.js';
-import { exportSTL, exportImagine, importFile } from './fileHandler.js';
+import { exportSTL, exportImagine, importFile, normalizeGeometry } from './fileHandler.js';
 import { updateGrid, scene } from './scene.js';
 import { selectObject, onSelectionChange } from './selection.js';
 import { saveState, undo, redo } from './history.js';
@@ -15,21 +15,7 @@ function updateOffsetDisplay(offset) {
     document.getElementById('offset-z').value = offset.z.toFixed(2);
 }
 
-function normalizeGeometry(geometry) {
-    geometry.computeBoundingBox();
-    const center = new THREE.Vector3();
-    geometry.boundingBox.getCenter(center);
-    geometry.translate(-center.x, -center.y, -center.z);
 
-    // Normalize scale roughly to 20 units
-    const size = new THREE.Vector3();
-    geometry.boundingBox.getSize(size);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    if (maxDim > 0) {
-        const scale = 20 / maxDim;
-        geometry.scale(scale, scale, scale);
-    }
-}
 
 function addListener(id, event, handler) {
     const el = document.getElementById(id);
@@ -109,10 +95,14 @@ export function initUI() {
                 if (shape.yOffset !== undefined) {
                     mesh.position.y = shape.yOffset;
                 } else {
-                    mesh.updateMatrixWorld();
-                    const box = new THREE.Box3().setFromObject(mesh);
-                    const minY = box.min.y;
-                    const shiftY = -minY;
+                    mesh.rotation.set(0, 0, 0); // Reset rotation for measurement
+                    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+                    const size = new THREE.Vector3();
+                    mesh.geometry.boundingBox.getSize(size);
+                    // Apply scale if needed, though usually 1 for new shapes
+                    size.multiply(mesh.scale);
+
+                    const shiftY = size.y / 2;
                     mesh.position.y += shiftY;
                 }
             } catch (error) {
@@ -669,9 +659,10 @@ export function hidePropertiesPanel() {
 }
 
 function updateDimensionInputs(object) {
-    const box = new THREE.Box3().setFromObject(object);
+    if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
     const size = new THREE.Vector3();
-    box.getSize(size);
+    object.geometry.boundingBox.getSize(size);
+    size.multiply(object.scale);
 
     const wInput = document.getElementById('object-width');
     const hInput = document.getElementById('object-height');
@@ -685,9 +676,11 @@ function updateDimensionInputs(object) {
 function setDimension(axis, value) {
     if (!state.selectedObject) return;
 
-    const box = new THREE.Box3().setFromObject(state.selectedObject);
+    const object = state.selectedObject;
+    if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
     const size = new THREE.Vector3();
-    box.getSize(size);
+    object.geometry.boundingBox.getSize(size);
+    size.multiply(object.scale);
 
     const currentSize = size[axis];
     if (currentSize === 0) return;

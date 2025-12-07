@@ -120,13 +120,12 @@ export class TransformTool {
     }
 
     clearHandles() {
-        while (this.group.children.length > 0) {
-            const child = this.group.children[0];
-            this.group.remove(child);
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) child.material.dispose();
-        }
-        this.handles = [];
+        // Optimization: Don't remove/dispose, just hide.
+        // We reuse these handles in updateHandles via Object Pooling.
+        this.handles.forEach(handle => {
+            handle.visible = false;
+        });
+        // We keep this.handles array populated.
         this.lastSelected = null;
     }
 
@@ -282,7 +281,7 @@ export class TransformTool {
             this.createNewHandle();
         }
 
-        // Hide extra handles
+        // Hide extra handles (instead of removing them)
         for (let i = handleDefs.length; i < this.handles.length; i++) {
             this.handles[i].visible = false;
         }
@@ -290,7 +289,7 @@ export class TransformTool {
         // Update positions
         handleDefs.forEach((def, index) => {
             const handle = this.handles[index];
-            handle.visible = true;
+            handle.visible = true; // Make sure it's visible
 
             // Calculate World Position
             const worldPos = def.pos.clone().applyMatrix4(object.matrixWorld);

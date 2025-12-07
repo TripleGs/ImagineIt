@@ -15,18 +15,13 @@ export function onSelectionChange(callback) {
 // Exported for UI
 export function selectAll() {
     // Clear existing
-    state.selectedObjects.forEach(obj => {
-        if (obj.userData.helper) {
-            obj.remove(obj.userData.helper);
-            obj.userData.helper = null;
-        }
-    });
+
 
     // Select all
     state.selectedObjects = [...state.objects];
 
     state.selectedObjects.forEach(obj => {
-        addWireframeHelper(obj);
+
     });
 
     // Deactivate transform tool if multiple
@@ -80,7 +75,7 @@ function onPointerDown(event) {
     state.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     state.raycaster.setFromCamera(state.mouse, camera);
-    const intersects = state.raycaster.intersectObjects(state.objects);
+    const intersects = state.raycaster.intersectObjects(state.objects, false);
 
     if (intersects.length > 0) {
         const object = intersects[0].object;
@@ -192,7 +187,7 @@ function onPointerUp(event) {
             if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
                 if (!state.selectedObjects.includes(obj)) {
                     state.selectedObjects.push(obj);
-                    addWireframeHelper(obj);
+
                 }
             }
         });
@@ -352,14 +347,11 @@ function toggleObjectSelection(object) {
     if (index > -1) {
         // Deselect this object
         state.selectedObjects.splice(index, 1);
-        if (object.userData.helper) {
-            object.remove(object.userData.helper);
-            object.userData.helper = null;
-        }
+
     } else {
         // Add to selection
         state.selectedObjects.push(object);
-        addWireframeHelper(object);
+
     }
 
     // Update Transform Tool state
@@ -377,31 +369,11 @@ function toggleObjectSelection(object) {
     onSelectionChangeCallbacks.forEach(cb => cb(state.selectedObjects));
 }
 
-function addWireframeHelper(object) {
-    // Disabled for performance with complex STLs
-    /*
-    if (object.userData.helper) return;
 
-    const wireframeGeo = new THREE.WireframeGeometry(object.geometry);
-    const wireframe = new THREE.LineSegments(wireframeGeo);
-    wireframe.material.depthTest = false;
-    wireframe.material.opacity = 0.25;
-    wireframe.material.transparent = true;
-    wireframe.material.color.set(0x000000);
-
-    object.add(wireframe);
-    object.userData.helper = wireframe;
-    */
-}
 
 export function selectObject(object) {
     // Clean up previous selection
-    state.selectedObjects.forEach(obj => {
-        if (obj.userData.helper) {
-            obj.remove(obj.userData.helper);
-            obj.userData.helper = null;
-        }
-    });
+    // We no longer remove helpers as they are permanent "Always On" edges.
 
     removeMovementHelper();
 
@@ -414,9 +386,6 @@ export function selectObject(object) {
         // Store initial position
         state.dragStartPosition.copy(object.position);
         state.currentOffset.set(0, 0, 0);
-
-        // Add wireframe helper
-        addWireframeHelper(object);
 
         // Activate Transform Tool for single selection
         if (state.selectedObjects.length === 1) {

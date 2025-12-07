@@ -4,6 +4,7 @@ import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { state } from './state.js';
 import { scene } from './scene.js';
 import { selectObject } from './selection.js';
+import { createMesh } from './objects.js';
 
 export function exportSTL() {
     if (state.selectedObject && state.selectedObject.userData.helper) {
@@ -59,14 +60,20 @@ export function exportImagine() {
 
 export function importFile(file) {
     const filename = file.name.toLowerCase();
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('visible');
 
-    if (filename.endsWith('.stl')) {
-        loadSTL(file);
-    } else if (filename.endsWith('.imagine') || filename.endsWith('.json')) {
-        loadImagine(file);
-    } else {
-        alert('Unsupported file format. Please use .stl or .imagine');
-    }
+    // Use setTimeout to allow UI to render the loader
+    setTimeout(() => {
+        if (filename.endsWith('.stl')) {
+            loadSTL(file);
+        } else if (filename.endsWith('.imagine') || filename.endsWith('.json')) {
+            loadImagine(file);
+        } else {
+            alert('Unsupported file format. Please use .stl or .imagine');
+            if (overlay) overlay.classList.remove('visible');
+        }
+    }, 100);
 }
 
 function loadSTL(file) {
@@ -77,28 +84,21 @@ function loadSTL(file) {
             const geometry = loader.parse(e.target.result);
             normalizeGeometry(geometry);
 
-            // Create mesh with random color
-            const material = new THREE.MeshStandardMaterial({
-                color: Math.random() * 0xffffff,
-                roughness: 0.5,
-                metalness: 0.1
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.userData.name = file.name;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            // Use createMesh to ensure edges are added automatically
+            const mesh = createMesh(geometry, Math.random() * 0xffffff, new THREE.Vector3(0, 10, 0), file.name);
 
-            // Position it
-            mesh.position.set(0, 10, 0);
-
-            // Add to scene
-            scene.add(mesh);
-            state.objects.push(mesh);
             selectObject(mesh);
         } catch (err) {
             console.error(err);
             alert('Failed to parse STL file.');
+        } finally {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.remove('visible');
         }
+    };
+    reader.onerror = function () {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.classList.remove('visible');
     };
     reader.readAsArrayBuffer(file);
 }
@@ -126,6 +126,18 @@ function loadImagine(file) {
                     obj.castShadow = true;
                     obj.receiveShadow = true;
 
+                    // Add edges if missing (since ObjectLoader might not trigger createMesh logic)
+                    if (!obj.userData.helper) {
+                        const edgesGeo = new THREE.EdgesGeometry(obj.geometry, 15);
+                        const edges = new THREE.LineSegments(edgesGeo);
+                        edges.material.depthTest = true;
+                        edges.material.opacity = 1;
+                        edges.material.transparent = false;
+                        edges.material.color.set(0x000000);
+                        obj.add(edges);
+                        obj.userData.helper = edges;
+                    }
+
                     scene.add(obj);
                     state.objects.push(obj);
                     loadedObjects.push(obj);
@@ -135,7 +147,7 @@ function loadImagine(file) {
             if (loadedObjects.length > 0) {
                 // Select the last loaded object
                 selectObject(loadedObjects[loadedObjects.length - 1]);
-                alert(`Imported ${loadedObjects.length} objects.`);
+                // alert(`Imported ${loadedObjects.length} objects.`); 
             } else {
                 alert('No valid objects found in file.');
             }
@@ -143,7 +155,14 @@ function loadImagine(file) {
         } catch (err) {
             console.error(err);
             alert('Failed to load project: ' + err.message);
+        } finally {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.remove('visible');
         }
+    };
+    reader.onerror = function () {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.classList.remove('visible');
     };
     reader.readAsText(file);
 }
@@ -156,7 +175,7 @@ function saveString(text, filename) {
     link.click();
 }
 
-function normalizeGeometry(geometry) {
+export function normalizeGeometry(geometry) {
     geometry.computeBoundingBox();
     const center = new THREE.Vector3();
     geometry.boundingBox.getCenter(center);
@@ -170,4 +189,7 @@ function normalizeGeometry(geometry) {
         const scale = 20 / maxDim;
         geometry.scale(scale, scale, scale);
     }
+
+    // allow the transform tool to see the correct/new size immediately
+    geometry.computeBoundingBox();
 }
