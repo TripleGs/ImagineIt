@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { state } from './state.js';
 import { createMesh } from './objects.js';
-import { exportSTL } from './exporter.js';
+import { exportSTL, exportImagine, importFile } from './fileHandler.js';
 import { updateGrid, scene } from './scene.js';
 import { selectObject, onSelectionChange } from './selection.js';
 import { saveState, undo, redo } from './history.js';
@@ -109,17 +109,6 @@ export function initUI() {
                 if (shape.yOffset !== undefined) {
                     mesh.position.y = shape.yOffset;
                 } else {
-                    // Default behavior for other shapes (sit on ground based on size/default pos)
-                    // mesh.position.y = 10; // 10 is current default logic for random pos
-
-                    // Actually, let's keep the bounding box logic for NON-dice shapes if we want 
-                    // or just fallback to the random position height (10). 
-                    // User only complained about dice. 
-                    // Let's stick to the requested change: use manual offset if present.
-                    // But we should probably still try to snap basic shapes if they don't have offset?
-                    // Previous logic snapped EVERYTHING. 
-                    // Let's keep snapping for everything ELSE, but use offset if it exists.
-
                     mesh.updateMatrixWorld();
                     const box = new THREE.Box3().setFromObject(mesh);
                     const minY = box.min.y;
@@ -155,7 +144,53 @@ export function initUI() {
     addListener('delete-object', 'click', deleteSelectedObject);
     addListener('uncombine-object', 'click', uncombineObject);
 
-    addListener('export-stl', 'click', exportSTL);
+    // -- Import / Export Handlers --
+
+    // Import
+    addListener('import-btn', 'click', () => {
+        document.getElementById('file-input').click();
+    });
+
+    addListener('file-input', 'change', (e) => {
+        if (e.target.files.length > 0) {
+            importFile(e.target.files[0]);
+            e.target.value = ''; // Reset input
+        }
+    });
+
+    // Export Modal
+    const exportModal = document.getElementById('export-modal');
+    const closeModalBtn = exportModal.querySelector('.close-modal');
+
+    function openExportModal() {
+        exportModal.classList.add('show');
+    }
+
+    function closeExportModal() {
+        exportModal.classList.remove('show');
+    }
+
+    addListener('export-btn', 'click', openExportModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeExportModal);
+
+    // Close on click outside
+    window.addEventListener('click', (e) => {
+        if (e.target === exportModal) {
+            closeExportModal();
+        }
+    });
+
+    // Export Options
+    addListener('export-imagine-btn', 'click', () => {
+        exportImagine();
+        closeExportModal();
+    });
+
+    addListener('export-stl-btn', 'click', () => {
+        exportSTL();
+        closeExportModal();
+    });
+
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (event) => {
@@ -211,14 +246,12 @@ export function initUI() {
     });
 
     // Name Input
-    // Name Input
     addListener('object-name', 'change', (e) => {
         if (state.selectedObject) {
             state.selectedObject.userData.name = e.target.value;
         }
     });
 
-    // Type toggle buttons
     // Type toggle buttons
     addListener('type-solid', 'click', () => {
         if (state.selectedObject) {
@@ -269,7 +302,6 @@ export function initUI() {
         }
     });
 
-    // Settings
     // Settings
     addListener('snap-setting', 'change', (e) => {
         const val = parseFloat(e.target.value);

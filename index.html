@@ -36,7 +36,40 @@
         </div>
         <div class="separator"></div>
         <div class="toolbar-group">
-            <button id="export-stl" title="Export STL">⬇️ Export</button>
+            <button id="import-btn" title="Import File">📂 Import</button>
+            <button id="export-btn" title="Export File">💾 Export</button>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Import -->
+    <input type="file" id="file-input" accept=".stl,.imagine" style="display: none;">
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Choose an export format:</p>
+                <div class="export-options">
+                    <button id="export-imagine-btn" class="export-option-btn">
+                        <span class="icon">✨</span>
+                        <div class="text">
+                            <span class="title">Imagine Project (.imagine)</span>
+                            <span class="desc">Save with all combine details and properties</span>
+                        </div>
+                    </button>
+                    <button id="export-stl-btn" class="export-option-btn">
+                        <span class="icon">🧊</span>
+                        <div class="text">
+                            <span class="title">3D Object (.stl)</span>
+                            <span class="desc">Export geometry for 3D printing</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
