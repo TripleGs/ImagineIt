@@ -194,15 +194,48 @@ export function initUI() {
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (event) => {
+        const isCtrl = event.ctrlKey || event.metaKey;
+
         // Ctrl+Z or Cmd+Z for undo
-        if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        if (isCtrl && event.key === 'z' && !event.shiftKey) {
             event.preventDefault();
             undo();
         }
         // Ctrl+Shift+Z or Ctrl+Y for redo
-        else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        else if (isCtrl && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
             event.preventDefault();
             redo();
+        }
+        // Delete or Backspace to delete selection
+        else if (event.key === 'Delete' || event.key === 'Backspace') {
+            // Prevent backspace from navigating back if not in an input
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+                deleteSelectedObject();
+            }
+        }
+        // Ctrl+D or Cmd+D to duplicate
+        else if (isCtrl && (event.key === 'd' || event.key === 'D')) {
+            event.preventDefault();
+            duplicateSelectedObject();
+        }
+        // Ctrl+C / Cmd+C for Copy
+        else if (isCtrl && (event.key === 'c' || event.key === 'C')) {
+            event.preventDefault();
+            copySelection();
+        }
+        // Ctrl+V / Cmd+V for Paste
+        else if (isCtrl && (event.key === 'v' || event.key === 'V')) {
+            event.preventDefault();
+            pasteSelection();
+        }
+        // Arrow Keys for Nudging
+        else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            // Only nudge if not focused on an input
+            if (document.activeElement.tagName !== 'INPUT') {
+                event.preventDefault();
+                nudgeSelection(event.key, event.shiftKey);
+            }
         }
     });
 
@@ -332,6 +365,125 @@ function deleteSelectedObject() {
         });
         selectObject(null);
     }
+}
+
+function duplicateSelectedObject() {
+    if (state.selectedObjects.length === 0) return;
+
+    // Use copy/paste logic for duplication to keep it consistent
+    copySelection();
+    pasteSelection();
+}
+
+
+function copySelection() {
+    if (state.selectedObjects.length === 0) return;
+
+    // Store clones of the meshes in the clipboard
+    // We clone them so they are independent of the scene objects (which might be deleted)
+    state.clipboard = state.selectedObjects.map(original => {
+        const clone = original.clone();
+
+        // Deep clone material
+        if (original.material) {
+            clone.material = original.material.clone();
+        }
+
+        // Deep clone user data
+        clone.userData = JSON.parse(JSON.stringify(original.userData));
+
+        return clone;
+    });
+
+    console.log(`Copied ${state.clipboard.length} objects to clipboard.`);
+}
+
+function pasteSelection() {
+    if (state.clipboard.length === 0) return;
+
+    saveState();
+
+    const newSelection = [];
+
+    state.clipboard.forEach(clipboardObj => {
+        // Clone from clipboard to create a new scene instance
+        const instance = clipboardObj.clone();
+
+        if (clipboardObj.material) {
+            instance.material = clipboardObj.material.clone();
+        }
+
+        instance.userData = JSON.parse(JSON.stringify(clipboardObj.userData));
+
+        // Rename
+        const nameParts = (instance.userData.name || 'Object').split(' ');
+        const lastPart = parseInt(nameParts[nameParts.length - 1]);
+        if (!isNaN(lastPart)) {
+            instance.userData.name = `${nameParts.slice(0, -1).join(' ')} ${lastPart + 1}`;
+        } else {
+            instance.userData.name = `${instance.userData.name} (Copy)`;
+        }
+
+        // Offset
+        instance.position.add(new THREE.Vector3(5, 0, 5));
+
+        scene.add(instance);
+        state.objects.push(instance);
+        newSelection.push(instance);
+    });
+
+    // Select new objects
+    if (newSelection.length > 0) {
+        // Select the first one to trigger UI updates
+        selectObject(newSelection[0]);
+        // TODO: support multi-select in API explicitly
+    }
+}
+
+function nudgeSelection(key, isShift) {
+    if (!state.selectedObject) return;
+
+    saveState();
+
+    // Default nudge amount: snap value or 1
+    let amount = state.snapValue > 0 ? state.snapValue : 1;
+
+    // Shift key multiplier
+    if (isShift) amount *= 10;
+
+    const offset = new THREE.Vector3(0, 0, 0);
+
+    // Get camera direction to make arrows intuitive relative to view? 
+    // Or just align to world axes? Tinkercad aligns to world axes usually.
+    // Let's stick to World X/Z for arrows.
+
+    switch (key) {
+        case 'ArrowUp':
+            offset.z = -amount;
+            break;
+        case 'ArrowDown':
+            offset.z = amount;
+            break;
+        case 'ArrowLeft':
+            offset.x = -amount;
+            break;
+        case 'ArrowRight':
+            offset.x = amount;
+            break;
+    }
+
+    state.selectedObjects.forEach(obj => {
+        obj.position.add(offset);
+    });
+
+    // Update inputs
+    const object = state.selectedObject;
+    document.getElementById('offset-x').value = '0'; // Current drag offset reset
+    // Actually we should update the Properties Panel position/input values?
+    // The "Pos" inputs in properties panel show relative offset during drag, 
+    // but usually we might want to show absolute world pos or just re-init panel.
+    // handleSelectionChange calls updatePropertiesPanel.
+    updatePropertiesPanel(state.selectedObjects);
 }
 
 function handleSelectionChange(objects) {

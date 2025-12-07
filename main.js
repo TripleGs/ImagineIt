@@ -5,6 +5,7 @@ import { initUI } from './js/ui.js';
 import { state } from './js/state.js';
 import { alignTool } from './js/alignTool.js';
 import { faceSnapTool } from './js/faceSnapTool.js';
+import { transformTool } from './js/transformTool.js';
 
 console.log('main.js: calling initScene');
 initScene();
@@ -18,6 +19,7 @@ function animate() {
     requestAnimationFrame(animate);
     orbitControls.update();
     alignTool.update();
+    transformTool.update();
     renderer.render(scene, camera);
 }
 

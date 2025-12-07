@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { orbitControls } from './controls.js';
 import { scene } from './scene.js';
 import { saveState } from './history.js';
+import { transformTool } from './transformTool.js';
 
 let onSelectionChangeCallbacks = [];
 let camera, renderer;
@@ -87,6 +88,11 @@ function onPointerMove(event) {
 
         // Notify UI
         notifyDragUpdate();
+
+        // Update transform handles if active
+        if (state.selectedObjects.length === 1) {
+            transformTool.updateHandles();
+        }
     }
 }
 
@@ -243,6 +249,14 @@ function toggleObjectSelection(object) {
         addWireframeHelper(object);
     }
 
+    // Update Transform Tool state
+    if (state.selectedObjects.length === 1) {
+        transformTool.activate();
+    } else {
+        transformTool.deactivate();
+        // If > 1, maybe show align tool or different handles later
+    }
+
     // Update primary selection
     state.selectedObject = state.selectedObjects.length > 0 ? state.selectedObjects[0] : null;
 
@@ -290,6 +304,13 @@ export function selectObject(object) {
 
         // Add wireframe helper
         addWireframeHelper(object);
+
+        // Activate Transform Tool for single selection
+        if (state.selectedObjects.length === 1) {
+            transformTool.activate();
+        }
+    } else {
+        transformTool.deactivate();
     }
 
     // Notify listeners
