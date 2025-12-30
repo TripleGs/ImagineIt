@@ -36,7 +36,7 @@ export function exportSTL() {
     }
 }
 
-export function exportImagine() {
+export async function exportImagine() {
     if (state.objects.length === 0) {
         alert('No objects to export!');
         return;
@@ -55,7 +55,24 @@ export function exportImagine() {
     };
 
     const json = JSON.stringify(data, null, 2);
-    saveString(json, 'project.imagine');
+
+    if (window.electronAPI) {
+        const name = prompt('Enter project name:', 'project');
+        if (name) {
+            try {
+                await window.electronAPI.saveFile(name, json);
+                alert('Saved to library!');
+                // Refresh library if UI is open (it does it automatically via poll? No, we might need to trigger refresh)
+                // For now, next time library opens it will refresh. Or we can dispatch event.
+                // But let's keep it simple.
+            } catch (e) {
+                console.error(e);
+                alert('Failed to save file');
+            }
+        }
+    } else {
+        saveString(json, 'project.imagine');
+    }
 }
 
 export function importFile(file) {
@@ -108,50 +125,7 @@ function loadImagine(file) {
     reader.onload = function (e) {
         try {
             const data = JSON.parse(e.target.result);
-
-            // Check if valid structure
-            if (!data.objects) {
-                throw new Error('Invalid .imagine file structure');
-            }
-
-            const loader = new THREE.ObjectLoader();
-            const loadedObjects = [];
-
-            // Parse each object and add to scene
-            data.objects.forEach(objData => {
-                const obj = loader.parse(objData);
-
-                // Ensure it's treated as a mesh if possible
-                if (obj.isMesh) {
-                    obj.castShadow = true;
-                    obj.receiveShadow = true;
-
-                    // Add edges if missing (since ObjectLoader might not trigger createMesh logic)
-                    if (!obj.userData.helper) {
-                        const edgesGeo = new THREE.EdgesGeometry(obj.geometry, 15);
-                        const edges = new THREE.LineSegments(edgesGeo);
-                        edges.material.depthTest = true;
-                        edges.material.opacity = 1;
-                        edges.material.transparent = false;
-                        edges.material.color.set(0x000000);
-                        obj.add(edges);
-                        obj.userData.helper = edges;
-                    }
-
-                    scene.add(obj);
-                    state.objects.push(obj);
-                    loadedObjects.push(obj);
-                }
-            });
-
-            if (loadedObjects.length > 0) {
-                // Select the last loaded object
-                selectObject(loadedObjects[loadedObjects.length - 1]);
-                // alert(`Imported ${loadedObjects.length} objects.`); 
-            } else {
-                alert('No valid objects found in file.');
-            }
-
+            loadProjectData(data);
         } catch (err) {
             console.error(err);
             alert('Failed to load project: ' + err.message);
@@ -166,6 +140,94 @@ function loadImagine(file) {
     };
     reader.readAsText(file);
 }
+
+export function loadProjectData(data) {
+    // Check if valid structure
+    if (!data.objects) {
+        throw new Error('Invalid .imagine file structure');
+    }
+
+    // Clear existing scene? Optional, but usually desired for "Open"
+    // state.objects.forEach(obj => scene.remove(obj));
+    // state.objects = [];
+    // But current implementation appends (Merge). Let's stick to append or maybe we should clear?
+    // The user didn't specify. Tinkercad usually opens a new workspace.
+    // For now, we will APPEND (Merge) to keep existing behavior compliant with importFile, 
+    // BUT for "Open from Library" usually implies Replace. 
+    // Let's Clear if coming from Library? No, simpler to Append for now to avoid losing work accidentally.
+
+    // Actually, let's clear if it's a full project load.
+    // Only if confirm? libraryUI already asks confirm.
+    // Let's clear scene for Library loads.
+    // But this function is used by `importFile` too which might be "Import".
+    // `importFile` implies Import.
+    // Let's keep Append behavior for now to be safe.
+
+    const loader = new THREE.ObjectLoader();
+    const loadedObjects = [];
+
+    // Parse each object and add to scene
+    data.objects.forEach(objData => {
+        const obj = loader.parse(objData);
+
+        // Ensure it's treated as a mesh if possible
+        if (obj.isMesh) {
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+
+            // Add edges if missing
+            if (!obj.userData.helper) {
+                const edgesGeo = new THREE.EdgesGeometry(obj.geometry, 15);
+                const edges = new THREE.LineSegments(edgesGeo);
+                edges.material.depthTest = true;
+                edges.material.opacity = 1;
+                edges.material.transparent = false;
+                edges.material.color.set(0x000000);
+                obj.add(edges);
+                obj.userData.helper = edges;
+            }
+
+            scene.add(obj);
+            state.objects.push(obj);
+            loadedObjects.push(obj);
+        }
+    });
+
+    if (loadedObjects.length > 0) {
+        // Select the last loaded object
+        selectObject(loadedObjects[loadedObjects.length - 1]);
+    } else {
+        alert('No valid objects found in file.');
+    }
+}
+
+// Listen for library load events
+document.addEventListener('load-imagine-file', async (e) => {
+    const filename = e.detail.filename;
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('visible');
+
+    try {
+        const content = await window.electronAPI.loadFile(filename);
+        const data = JSON.parse(content);
+
+        // Clear scene for Library Open
+        // Improve: moving clear logic here
+        [...state.objects].forEach(obj => {
+            scene.remove(obj);
+            if (obj.geometry) obj.geometry.dispose();
+        });
+        state.objects = [];
+        selectObject(null);
+
+        loadProjectData(data);
+    } catch (err) {
+        console.error(err);
+        alert('Failed to load file: ' + err.message);
+    } finally {
+        if (overlay) overlay.classList.remove('visible');
+    }
+});
 
 function saveString(text, filename) {
     const blob = new Blob([text], { type: 'text/plain' });

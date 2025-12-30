@@ -176,7 +176,7 @@ export class TransformTool {
         const size = new THREE.Vector3().subVectors(groupMax, groupMin);
         const center = new THREE.Vector3().addVectors(groupMin, groupMax).multiplyScalar(0.5);
         const maxDim = Math.max(size.x, size.y, size.z);
-        const handleSize = Math.max(1.5, maxDim * 0.05); // Dynamic scale
+        const handleSize = 2.5; // Fixed scale to prevent handle resizing based on object size
 
         const handleDefs = [
             // Corners (Bottom)

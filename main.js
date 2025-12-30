@@ -7,12 +7,14 @@ import { alignTool } from './js/alignTool.js';
 import { faceSnapTool } from './js/faceSnapTool.js';
 import { transformTool } from './js/transformTool.js';
 
+import { initLibrary } from './js/libraryUI.js';
 console.log('main.js: calling initScene');
 initScene();
 console.log('main.js: initScene returned');
 initControls(camera, renderer);
 initSelection(camera, renderer);
 initUI();
+initLibrary();
 faceSnapTool.init(camera, renderer);
 
 function animate() {

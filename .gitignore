@@ -110,3 +110,6 @@ dist
 
 # macos
 .DS_Store
+
+# Stores things that need to be fixed
+TOFIX.md
