@@ -114,8 +114,10 @@ export function initUI() {
                     // Apply scale if needed, though usually 1 for new shapes
                     size.multiply(mesh.scale);
 
-                    const shiftY = size.y / 2;
-                    mesh.position.y += shiftY;
+                    // Align bottom of object to floor (y=0)
+                    // We calculate the scaled minimum Y of the local geometry so it sits exactly on the plane
+                    const minY = mesh.geometry.boundingBox.min.y * mesh.scale.y;
+                    mesh.position.y = -minY;
                 }
             } catch (error) {
                 console.error('Error adding shape:', error);
