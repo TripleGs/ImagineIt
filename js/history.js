@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { state } from './state.js';
 import { scene } from './scene.js';
 import { selectObject } from './selection.js';
+import { queueAutosave } from './autosave.js';
 
 export function saveState() {
     // Create a snapshot of the current scene state
@@ -24,6 +25,7 @@ export function saveState() {
     }
 
     console.log(`State saved. History size: ${state.history.length}, Index: ${state.historyIndex}`);
+    queueAutosave();
 }
 
 export function undo() {
@@ -182,4 +184,5 @@ function restoreState(snapshot) {
 
     // Clear selection
     selectObject(null);
+    queueAutosave();
 }

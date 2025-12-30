@@ -19,5 +19,7 @@ export const state = {
     history: [],
     historyIndex: -1,
     maxHistorySize: 100,
-    toolMode: 'select' // 'select' | 'face-snap'
+    toolMode: 'select', // 'select' | 'face-snap'
+    currentProjectName: 'Untitled Project',
+    hasProjectFile: false
 };

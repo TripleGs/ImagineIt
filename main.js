@@ -7,14 +7,14 @@ import { alignTool } from './js/alignTool.js';
 import { faceSnapTool } from './js/faceSnapTool.js';
 import { transformTool } from './js/transformTool.js';
 
-import { initLibrary } from './js/libraryUI.js';
+import { initDashboard } from './js/dashboard.js';
 console.log('main.js: calling initScene');
 initScene();
 console.log('main.js: initScene returned');
 initControls(camera, renderer);
 initSelection(camera, renderer);
 initUI();
-initLibrary();
+initDashboard();
 faceSnapTool.init(camera, renderer);
 
 function animate() {
@@ -26,3 +26,18 @@ function animate() {
 }
 
 animate();
+
+// Splash Screen Logic
+function initSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        setTimeout(() => {
+            splash.classList.add('fade-out');
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 800); // 800ms matches CSS transition
+        }, 2500); // Show splash for 2.5 seconds
+    }
+}
+
+initSplash();

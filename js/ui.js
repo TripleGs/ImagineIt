@@ -251,6 +251,42 @@ export function initUI() {
             event.preventDefault();
             pasteSelection();
         }
+        // Escape to Deselect / Blur
+        else if (event.key === 'Escape') {
+            let toolDeactivated = false;
+
+            // Deactivate Face Snap Tool
+            const faceSnapBtn = document.getElementById('face-snap-tool');
+            if (faceSnapBtn && faceSnapBtn.classList.contains('active-tool')) {
+                // We need to import faceSnapTool to call deactivate, or trigger click
+                // Since this file imports faceSnapTool, we can call it directly
+                faceSnapTool.deactivate();
+                faceSnapBtn.classList.remove('active-tool');
+                toolDeactivated = true;
+            }
+
+            // Deactivate Align Tool
+            const alignBtn = document.getElementById('align-tool');
+            if (alignTool.isActive) {
+                alignTool.deactivate();
+                alignBtn.classList.remove('active-tool');
+                toolDeactivated = true;
+            }
+
+            // Deactivate Combine Tool (if it has a persisting state)
+            // Combine is usually an instant action, but if it had a mode we'd clear it here.
+
+            // Only deselect objects if we didn't just exit a tool mode
+            if (!toolDeactivated) {
+                // Deselect objects
+                selectObject(null);
+
+                // Blur any focused element (buttons, inputs)
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+            }
+        }
         // Arrow Keys for Nudging
         else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
             // Only nudge if not focused on an input
@@ -548,6 +584,12 @@ function updateTypeButtons(isSolid) {
 
 export function updatePropertiesPanel(objects) {
     const panel = document.getElementById('properties-panel');
+
+    if (!objects || (Array.isArray(objects) && objects.length === 0)) {
+        hidePropertiesPanel();
+        return;
+    }
+
     panel.style.display = 'flex'; // Show entire panel
 
     document.getElementById('no-selection').style.display = 'none';

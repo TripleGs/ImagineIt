@@ -35,6 +35,8 @@ export function createMesh(geometry, color, position, type = 'object') {
     edges.material.transparent = false;
     edges.material.color.set(0x000000);
     edges.matrixAutoUpdate = false; // Optimization: It moves with the parent
+    edges.userData.isHelper = true;
+    edges.name = '__helper_edges__';
     mesh.add(edges);
     mesh.userData.helper = edges;
 

@@ -25,22 +25,7 @@ Follow these steps to get the application running from scratch.
    ```
 
 ## Running the Application
-
-### Development Mode (Recommended)
-Use this mode for active development with hot-reloading.
-
-1. **Terminal 1**: Start the Vite development server.
-   ```bash
-   npm run dev
-   ```
-
-2. **Terminal 2**: Launch the Electron app (it will automatically connect to the dev server).
-   ```bash
-   npm start
-   ```
-
-### Production Mode
-Use this mode to test the built application as it would appear to end users.
+To run the application, follow these steps:
 
 1. Build the project:
    ```bash
@@ -51,8 +36,7 @@ Use this mode to test the built application as it would appear to end users.
    ```bash
    npm start
    ```
-   *(Ensure the dev server from `npm run dev` is stopped, or Electron will try to connect to it instead.)*
-
+   
 ---
 
 This code is not to be distributed, modified, or sold commercially in any way shape or form.

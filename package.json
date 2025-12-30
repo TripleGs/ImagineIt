@@ -1,5 +1,6 @@
 {
-  "name": "imagineit-fixed-combine",
+  "name": "imagineit",
+  "productName": "ImagineIt",
   "version": "1.0.0",
   "description": "Tinkercad Clone with fixed combine feature",
   "main": "electron/main.js",
@@ -8,7 +9,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "electron ."
+    "start": "electron .",
+    "make-icon": "electron ./scripts/make-icon.mjs"
   },
   "dependencies": {
     "three": "^0.181.2",

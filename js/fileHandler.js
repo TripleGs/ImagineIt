@@ -5,6 +5,11 @@ import { state } from './state.js';
 import { scene } from './scene.js';
 import { selectObject } from './selection.js';
 import { createMesh } from './objects.js';
+import { detachHelperLines, serializeProjectObjects } from './projectSerialization.js';
+
+function normalizeProjectName(name) {
+    return name.trim().replace(/\.imagine$/i, '');
+}
 
 export function exportSTL() {
     if (state.selectedObject && state.selectedObject.userData.helper) {
@@ -42,8 +47,8 @@ export async function exportImagine() {
         return;
     }
 
-    // We serialize the individual objects in the list
-    const serializedObjects = state.objects.map(obj => obj.toJSON());
+    // We serialize the individual objects in the list (without helper lines)
+    const serializedObjects = serializeProjectObjects(state.objects);
 
     const data = {
         metadata: {
@@ -57,10 +62,23 @@ export async function exportImagine() {
     const json = JSON.stringify(data, null, 2);
 
     if (window.electronAPI) {
-        const name = prompt('Enter project name:', 'project');
+        let name = state.currentProjectName || 'project';
+        const nameInput = document.getElementById('project-name-input');
+        if (nameInput && nameInput.value) {
+            name = nameInput.value;
+        } else {
+            name = prompt('Enter project name:', name);
+        }
+
+        name = name ? normalizeProjectName(name) : '';
+
         if (name) {
             try {
-                await window.electronAPI.saveFile(name, json);
+                const result = await window.electronAPI.saveFile(name, json);
+                const baseName = result?.name ? result.name.replace(/\.imagine$/i, '') : name;
+                state.currentProjectName = baseName;
+                state.hasProjectFile = true;
+                if (nameInput) nameInput.value = baseName;
                 alert('Saved to library!');
                 // Refresh library if UI is open (it does it automatically via poll? No, we might need to trigger refresh)
                 // For now, next time library opens it will refresh. Or we can dispatch event.
@@ -71,7 +89,8 @@ export async function exportImagine() {
             }
         }
     } else {
-        saveString(json, 'project.imagine');
+        const filename = `${normalizeProjectName(state.currentProjectName || 'project')}.imagine`;
+        saveString(json, filename);
     }
 }
 
@@ -175,23 +194,33 @@ export function loadProjectData(data) {
             obj.castShadow = true;
             obj.receiveShadow = true;
 
-            // Add edges if missing
-            if (!obj.userData.helper) {
-                const edgesGeo = new THREE.EdgesGeometry(obj.geometry, 15);
-                const edges = new THREE.LineSegments(edgesGeo);
-                edges.material.depthTest = true;
-                edges.material.opacity = 1;
-                edges.material.transparent = false;
-                edges.material.color.set(0x000000);
-                obj.add(edges);
-                obj.userData.helper = edges;
+            detachHelperLines(obj);
+            if (obj.userData && Object.prototype.hasOwnProperty.call(obj.userData, 'helper')) {
+                delete obj.userData.helper;
             }
+
+            const edgesGeo = new THREE.EdgesGeometry(obj.geometry, 15);
+            const edges = new THREE.LineSegments(edgesGeo);
+            edges.material.depthTest = true;
+            edges.material.opacity = 1;
+            edges.material.transparent = false;
+            edges.material.color.set(0x000000);
+            edges.matrixAutoUpdate = false;
+            edges.userData.isHelper = true;
+            edges.name = '__helper_edges__';
+            obj.add(edges);
+            obj.userData.helper = edges;
 
             scene.add(obj);
             state.objects.push(obj);
             loadedObjects.push(obj);
         }
     });
+
+    if (data.objects.length === 0) {
+        selectObject(null);
+        return;
+    }
 
     if (loadedObjects.length > 0) {
         // Select the last loaded object
@@ -206,6 +235,11 @@ document.addEventListener('load-imagine-file', async (e) => {
     const filename = e.detail.filename;
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.classList.add('visible');
+    const baseName = filename.replace(/\.imagine$/i, '');
+    const nameInput = document.getElementById('project-name-input');
+    if (nameInput) nameInput.value = baseName;
+    state.currentProjectName = baseName;
+    state.hasProjectFile = true;
 
     try {
         const content = await window.electronAPI.loadFile(filename);
