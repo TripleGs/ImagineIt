@@ -130,13 +130,29 @@ ipcMain.handle('file:list', async () => {
         const files = fs.readdirSync(saveDir).filter(f => f.endsWith('.imagine'));
 
         return files.map(filename => {
-            const meta = library.files[filename] || { tags: [], group: 'Default' };
+            const meta = library.files[filename] || { tags: [], group: 'Default', favorite: false };
             // Ensure group exists in library
             if (!library.groups.includes(meta.group)) {
                 meta.group = 'Default';
             }
+            if (!Array.isArray(meta.tags)) {
+                meta.tags = [];
+            }
+            if (typeof meta.favorite !== 'boolean') {
+                meta.favorite = false;
+            }
+
+            let modified = null;
+            try {
+                const stat = fs.statSync(path.join(saveDir, filename));
+                modified = stat.mtimeMs || stat.mtime.getTime();
+            } catch (e) {
+                console.warn('Failed to read file stats for', filename, e);
+            }
+
             return {
                 name: filename,
+                modified,
                 ...meta
             };
         });
@@ -156,7 +172,7 @@ ipcMain.handle('file:save', async (event, name, content) => {
     // Initialize metadata if new
     const library = getLibrary();
     if (!library.files[name]) {
-        library.files[name] = { tags: [], group: 'Default' };
+        library.files[name] = { tags: [], group: 'Default', favorite: false };
         saveLibrary(library);
     }
 
@@ -204,16 +220,22 @@ ipcMain.handle('file:update-meta', async (event, filename, metadata) => {
     const library = getLibrary();
     // Update fields provided
     if (!library.files[filename]) {
-        library.files[filename] = { tags: [], group: 'Default' };
+        library.files[filename] = { tags: [], group: 'Default', favorite: false };
     }
 
-    if (metadata.tags) library.files[filename].tags = metadata.tags;
-    if (metadata.group) {
-        library.files[filename].group = metadata.group;
+    if (Object.prototype.hasOwnProperty.call(metadata, 'tags')) {
+        library.files[filename].tags = Array.isArray(metadata.tags) ? metadata.tags : [];
+    }
+    if (Object.prototype.hasOwnProperty.call(metadata, 'group')) {
+        const cleanedGroup = metadata.group || 'Default';
+        library.files[filename].group = cleanedGroup;
         // Add group to list if not exists
-        if (!library.groups.includes(metadata.group)) {
-            library.groups.push(metadata.group);
+        if (!library.groups.includes(cleanedGroup)) {
+            library.groups.push(cleanedGroup);
         }
+    }
+    if (Object.prototype.hasOwnProperty.call(metadata, 'favorite')) {
+        library.files[filename].favorite = !!metadata.favorite;
     }
 
     saveLibrary(library);
